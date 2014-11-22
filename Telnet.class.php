@@ -178,6 +178,11 @@ class Telnet {
 	}
 
 
+	public static function getOptStr($code) {
+		return self::getCodeStrOrHexStr($code, self::$OPTS);
+	}
+
+
 	/**
 	 * Constructor. Initialises host, port and timeout parameters
 	 * defaults to localhost port 23 (standard telnet port)
