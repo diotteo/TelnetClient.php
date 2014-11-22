@@ -211,7 +211,7 @@ class Telnet {
 	 */
 	public function disconnect() {
 		if ($this->socket) {
-			if (! fclose($this->socket)) {
+			if (!fclose($this->socket)) {
 				throw new Exception("Error while closing telnet socket");
 			}
 			$this->socket = NULL;
