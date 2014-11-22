@@ -214,6 +214,7 @@ class Telnet {
 	 * @return boolean
 	 */
 	public function login($username, $password, $loginPrompt = 'login:', $passwordPrompt = 'Password:') {
+		$prompt = $this->prompt;
 		try {
 			$this->setPrompt($loginPrompt);
 			$this->waitPrompt();
@@ -221,7 +222,7 @@ class Telnet {
 			$this->setPrompt($passwordPrompt);
 			$this->waitPrompt();
 			$this->write($password);
-			$this->setPrompt();
+			$this->setPrompt($prompt);
 			$this->waitPrompt();
 		} catch (Exception $e) {
 			throw new Exception("Login failed: {$e->getMessage()}");
