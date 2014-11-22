@@ -1,0 +1,5 @@
+-Implement Binary Mode
+-Investigate whether we need to implement the negotiation state-machine described in RFC 1143 (Q method)
+-Add examples
+-Double IAC when in appears in the data stream
+-Expose options as properties
