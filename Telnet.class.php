@@ -328,6 +328,9 @@ class Telnet {
 
 			// Interpret As Command
 			if ($c == self::c_IAC) {
+				if (self::$DEBUG) {
+					printf("[IAC 0x%s]", bin2hex($c));
+				}
 				if ($this->negotiateTelnetOptions()) {
 					continue;
 				}
@@ -335,6 +338,9 @@ class Telnet {
 
 			// append current char to global buffer
 			$this->buffer .= $c;
+			if (self::$DEBUG) {
+				printf($c);
+			}
 
 			// we've encountered the prompt. Break out of the loop
 			if (!empty($prompt) && preg_match("/{$prompt}$/", $this->buffer)) {
@@ -405,13 +411,22 @@ class Telnet {
 	 */
 	protected function negotiateTelnetOptions() {
 		$c = $this->getc();
+		if (self::$DEBUG) {
+			printf("[CMD 0x%s]", bin2hex($c));
+		}
 
 		if ($c != self::c_IAC) {
 			if (($c == self::c_DO) || ($c == self::c_DONT)) {
 				$opt = $this->getc();
+				if (self::$DEBUG) {
+					printf("[OPT 0x%s]", bin2hex($opt));
+				}
 				fwrite($this->socket, self::c_IAC . self::c_WONT . $opt);
 			} else if (($c == self::c_WILL) || ($c == self::c_WONT)) {
 				$opt = $this->getc();
+				if (self::$DEBUG) {
+					printf("[OPT 0x%s]", bin2hex($opt));
+				}
 				fwrite($this->socket, self::c_IAC . self::c_DONT . $opt);
 			} else {
 				throw new Exception('Error: unknown control character ' . ord($c));
