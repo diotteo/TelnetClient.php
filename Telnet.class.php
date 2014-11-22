@@ -284,7 +284,7 @@ class Telnet {
 				return self::TELNET_OK;
 			}
 
-		} while ($c != $this->NULL || $c != $this->DC1);
+		} while ($c != $this->NULL);
 	}
 
 	/**
