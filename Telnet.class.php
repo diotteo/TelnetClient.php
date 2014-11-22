@@ -14,6 +14,7 @@
  * Extended by Christian Hammers <chammers@netcologne.de>
  * Modified by Frederik Sauer <fsa@dwarf.dk>
  *
+ * Modified by Olivier Diotte <olivier+github@diotte.ca>
  */
 class Telnet {
 
