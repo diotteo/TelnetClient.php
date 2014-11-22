@@ -197,12 +197,12 @@ class Telnet {
 	 * @param string $password Password
 	 * @return boolean
 	 */
-	public function login($username, $password) {
+	public function login($username, $password, $loginPrompt = 'login:', $passwordPrompt = 'Password:') {
 		try {
-			$this->setPrompt('login:');
+			$this->setPrompt($loginPrompt);
 			$this->waitPrompt();
 			$this->write($username);
-			$this->setPrompt('Password:');
+			$this->setPrompt($passwordPrompt);
 			$this->waitPrompt();
 			$this->write($password);
 			$this->setPrompt();
