@@ -82,7 +82,7 @@ class Telnet {
 	const CMD_WONT = "\xFC";
 	const CMD_DO   = "\xFD";
 	const CMD_DONT = "\xFE";
-	const CMD_IAC  = "\xFF";
+	const CMD_IAC  = "\xFF"; //Interpret As Command
 
 	private static $CMDS = array(
 			self::CMD_SE   => 'SE',
