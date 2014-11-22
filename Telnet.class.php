@@ -484,32 +484,37 @@ class Telnet {
 	 * @return boolean
 	 */
 	protected function negotiateTelnetOptions() {
-		$c = $this->getc();
-		$str = sprintf("[CMD %s]", self::getNvtCmdStr($c));
+		$cmd = $this->getc();
 
-		switch ($c) {
-		case self::CMD_IAC:
+		$replyCmd = null;
+		switch ($cmd) {
+		case self::CMD_IAC: //FIXME: This is supposed to happen in binary mode
 			throw new Exception('Error: Something Wicked Happened');
 			break;
 		case self::CMD_DO: //FALLTHROUGH
 		case self::CMD_DONT:
-			$opt = $this->getc();
-			$str .= sprintf("[OPT 0x%s]", bin2hex($opt));
-			fwrite($this->socket, self::CMD_IAC . self::CMD_WONT . $opt);
+			$replyCmd = self::CMD_WONT;
 			break;
 
 		case self::CMD_WILL: //FALLTHROUGH
 		case self::CMD_WONT:
-			$opt = $this->getc();
-			$str .= sprintf("[OPT 0x%s]", bin2hex($opt));
-			fwrite($this->socket, self::CMD_IAC . self::CMD_DONT . $opt);
+			$replyCmd = self::CMD_DONT;
 			break;
 
 		default:
-			throw new Exception('Error: unknown control character ' . ord($c));
+			if (self::$DEBUG) {
+				print('Ignoring unknown command character 0x' . bin2hex($cmd) . "\n");
+			}
+			//FIXME: Should we return OK?
+			return self::TELNET_OK;
 		}
 
+		$opt = $this->getc();
+		fwrite($this->socket, self::CMD_IAC . $replyCmd . $opt);
+
 		if (self::$DEBUG) {
+			$str = sprintf("[CMD %s]", self::getCmdStr($cmd));
+			$str .= sprintf("[OPT %s]", self::getOptStr($opt));
 			print($str . "\n");
 		}
 
