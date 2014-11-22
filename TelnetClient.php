@@ -1,6 +1,6 @@
 <?php
 /**
- * Telnet class
+ * TelnetClient class
  *
  * Used to execute remote commands via telnet connection
  * Uses sockets functions and fgetc() to process result
@@ -16,7 +16,7 @@
  *
  * Modified by Olivier Diotte <olivier+github@diotte.ca>
  */
-class Telnet {
+class TelnetClient {
 	private static $DEBUG = FALSE;
 
 	private $host;
