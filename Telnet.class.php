@@ -173,7 +173,7 @@ class Telnet {
 	}
 
 
-	public static function getNvtCmdStr($code) {
+	public static function getCmdStr($code) {
 		return self::getCodeStrOrHexStr($code, self::$CMDS);
 	}
 
