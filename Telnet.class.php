@@ -31,13 +31,63 @@ class Telnet {
 	private $errstr;
 	private $strip_prompt = TRUE;
 
-	private $NULL;
-	private $DC1;
-	private $WILL;
-	private $WONT;
-	private $DO;
-	private $DONT;
-	private $IAC;
+	/* NVT special characters
+	 * specified in the same order as in RFC854
+	 * same name as there, with a c_ prefix (to avoid clash with PHP keywords)
+	 */
+	const c_NUL  = "\x00";
+	const c_LF   = "\x0A";
+	const c_CR   = "\x0D";
+
+	const c_BEL  = "\x07";
+	const c_BS   = "\x08";
+	const c_HT   = "\x09";
+	const c_VT   = "\x0B";
+	const c_FF   = "\x0C";
+
+	const c_SE   = "\xF0"; //Subnegotiation End
+	const c_NOP  = "\xF1";
+	const c_DM   = "\xF2"; //Data Mark
+	const c_BRK  = "\xF3"; //Break
+	const c_IP   = "\xF4"; //Interrupt Process
+	const c_AO   = "\xF5"; //Abort Output
+	const c_AYT  = "\xF6"; //Are You There
+	const c_EC   = "\xF7"; //Erase Character
+	const c_EL   = "\xF8"; //Erase Line
+	const c_GA   = "\xF9"; //Go Ahead
+	const c_SB   = "\xFA"; //Subnegotiation (start)
+	const c_WILL = "\xFB";
+	const c_WONT = "\xFC";
+	const c_DO   = "\xFD";
+	const c_DONT = "\xFE";
+	const c_IAC  = "\xFF";
+
+	private static $NVT_CODES = array(
+			self::c_NUL,
+			self::c_LF,
+			self::c_CR,
+			self::c_BEL,
+			self::c_BS,
+			self::c_HT,
+			self::c_VT,
+			self::c_FF,
+			self::c_SE,
+			self::c_NOP,
+			self::c_DM,
+			self::c_BRK,
+			self::c_IP,
+			self::c_AO,
+			self::c_AYT,
+			self::c_EC,
+			self::c_EL,
+			self::c_GA,
+			self::c_SB,
+			self::c_WILL,
+			self::c_WONT,
+			self::c_DO,
+			self::c_DONT,
+			self::c_IAC
+			);
 
 	private $global_buffer = '';
 
@@ -61,15 +111,6 @@ class Telnet {
 		$this->timeout = $timeout;
 		$this->setPrompt($prompt);
 		$this->setStreamTimeout($stream_timeout);
-
-		// set some telnet special characters
-		$this->NULL = chr(0);
-		$this->DC1 = chr(17);
-		$this->WILL = chr(251);
-		$this->WONT = chr(252);
-		$this->DO = chr(253);
-		$this->DONT = chr(254);
-		$this->IAC = chr(255);
 
 		$this->connect();
 	}
@@ -269,8 +310,8 @@ class Telnet {
 				throw new Exception("Couldn't find the requested : '" . $prompt . "', it was not in the data returned from server: " . $this->buffer);
 			}
 
-			// Interpreted As Command
-			if ($c == $this->IAC) {
+			// Interpret As Command
+			if ($c == self::c_IAC) {
 				if ($this->negotiateTelnetOptions()) {
 					continue;
 				}
@@ -284,7 +325,7 @@ class Telnet {
 				return self::TELNET_OK;
 			}
 
-		} while ($c != $this->NULL);
+		} while ($c != self::c_NUL);
 	}
 
 	/**
@@ -349,13 +390,13 @@ class Telnet {
 	protected function negotiateTelnetOptions() {
 		$c = $this->getc();
 
-		if ($c != $this->IAC) {
-			if (($c == $this->DO) || ($c == $this->DONT)) {
+		if ($c != self::c_IAC) {
+			if (($c == self::c_DO) || ($c == self::c_DONT)) {
 				$opt = $this->getc();
-				fwrite($this->socket, $this->IAC . $this->WONT . $opt);
-			} else if (($c == $this->WILL) || ($c == $this->WONT)) {
+				fwrite($this->socket, self::c_IAC . self::c_WONT . $opt);
+			} else if (($c == self::c_WILL) || ($c == self::c_WONT)) {
 				$opt = $this->getc();
-				fwrite($this->socket, $this->IAC . $this->DONT . $opt);
+				fwrite($this->socket, self::c_IAC . self::c_DONT . $opt);
 			} else {
 				throw new Exception('Error: unknown control character ' . ord($c));
 			}
