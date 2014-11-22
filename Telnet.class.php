@@ -104,6 +104,40 @@ class Telnet {
 			);
 
 
+	const OPT_TXBIN     = "\x00"; //Transmit binary, RFC856
+	const OPT_ECHO      = "\x01"; //Echo, RFC857
+	const OPT_SGA       = "\x03"; //Suppress Go Ahead, RFC858
+	const OPT_STATUS    = "\x05"; //Status, RFC859
+	const OPT_TIMMRK    = "\x06"; //Timing Mark, RFC860
+	const OPT_EXTOPL    = "\xFF"; //Extended options list, RFC861
+	const OPT_EOR       = "\x19"; //25, End of record, RFC885
+	const OPT_3270_R    = "\x1D"; //29, 3270 Regimes (?), RFC1041
+	const OPT_NAWS      = "\x1F"; //31, Negotiate About Window Size, RFC1073
+	const OPT_TERMSPD   = "\x20"; //32, Terminal speed, RFC1079
+	const OPT_TERMTYP   = "\x18"; //24, Terminal type, RFC1091
+	const OPT_XDISPLOC  = "\x23"; //35, X Display Location, RFC1096
+	const OPT_LINEMODE  = "\x22"; //34, Linemode, RFC1116
+	const OPT_NEW_ENV   = "\x27"; //39, New environment variable, RFC1572
+	const OPT_R_FLW_CTR = "\x21"; //33, Remote Flow Control, RFC1080
+
+	private static $OPTS = array(
+			self::OPT_TXBIN     => 'Transmit Binary',
+			self::OPT_ECHO      => 'Echo',
+			self::OPT_SGA       => 'Suppress Go Ahead',
+			self::OPT_STATUS    => 'Status',
+			self::OPT_TIMMRK    => 'Timing Mark',
+			self::OPT_EXTOPL    => 'Extended Options List',
+			self::OPT_EOR       => 'End Of Record',
+			self::OPT_3270_R    => '3270-Regime',
+			self::OPT_NAWS      => 'Negotiate About Window Size',
+			self::OPT_TERMSPD   => 'Terminal Speed',
+			self::OPT_TERMTYP   => 'Terminal Type',
+			self::OPT_XDISPLOC  => 'X Display Location',
+			self::OPT_LINEMODE  => 'Linemode',
+			self::OPT_NEW_ENV   => 'New Environment',
+			self::OPT_R_FLW_CTR => 'Remote Flow Control'
+			);
+
 
 	private $global_buffer = '';
 
