@@ -415,24 +415,30 @@ class Telnet {
 			printf("[CMD 0x%s]", bin2hex($c));
 		}
 
-		if ($c != self::c_IAC) {
-			if (($c == self::c_DO) || ($c == self::c_DONT)) {
-				$opt = $this->getc();
-				if (self::$DEBUG) {
-					printf("[OPT 0x%s]", bin2hex($opt));
-				}
-				fwrite($this->socket, self::c_IAC . self::c_WONT . $opt);
-			} else if (($c == self::c_WILL) || ($c == self::c_WONT)) {
-				$opt = $this->getc();
-				if (self::$DEBUG) {
-					printf("[OPT 0x%s]", bin2hex($opt));
-				}
-				fwrite($this->socket, self::c_IAC . self::c_DONT . $opt);
-			} else {
-				throw new Exception('Error: unknown control character ' . ord($c));
-			}
-		} else {
+		switch ($c) {
+		case self::c_IAC:
 			throw new Exception('Error: Something Wicked Happened');
+			break;
+		case self::c_DO: //FALLTHROUGH
+		case self::c_DONT:
+			$opt = $this->getc();
+			if (self::$DEBUG) {
+				printf("[OPT 0x%s]", bin2hex($opt));
+			}
+			fwrite($this->socket, self::c_IAC . self::c_WONT . $opt);
+			break;
+
+		case self::c_WILL: //FALLTHROUGH
+		case self::c_WONT:
+			$opt = $this->getc();
+			if (self::$DEBUG) {
+				printf("[OPT 0x%s]", bin2hex($opt));
+			}
+			fwrite($this->socket, self::c_IAC . self::c_DONT . $opt);
+			break;
+
+		default:
+			throw new Exception('Error: unknown control character ' . ord($c));
 		}
 
 		return self::TELNET_OK;
