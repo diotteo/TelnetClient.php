@@ -120,6 +120,25 @@ class Telnet {
 	}
 
 
+	private static function getCodeStrOrHexStr($code, $CODE_LIST) {
+		if (array_key_exists($code, $CODE_LIST)) {
+			return $CODE_LIST[$code];
+		}
+
+		return '0x' . bin2hex($code);
+	}
+
+
+	public static function getNvtPrintSpecialStr($code) {
+		return self::getCodeStrOrHexStr($code, self::$NVTP_SPECIALS);
+	}
+
+
+	public static function getNvtCmdStr($code) {
+		return self::getCodeStrOrHexStr($code, self::$NVT_CMDS);
+	}
+
+
 	/**
 	 * Constructor. Initialises host, port and timeout parameters
 	 * defaults to localhost port 23 (standard telnet port)
