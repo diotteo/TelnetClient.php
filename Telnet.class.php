@@ -36,6 +36,7 @@ class Telnet {
 	 * specified in the same order as in RFC854
 	 * same name as there, with a c_ prefix (to avoid clash with PHP keywords)
 	 */
+	// Codes that have special meaning to the NVT Printer
 	const c_NUL  = "\x00";
 	const c_LF   = "\x0A";
 	const c_CR   = "\x0D";
@@ -46,6 +47,21 @@ class Telnet {
 	const c_VT   = "\x0B";
 	const c_FF   = "\x0C";
 
+	private static $NVTP_SPECIALS = array(
+			self::c_NUL  => 'NUL',
+			self::c_LF   => 'LF',
+			self::c_CR   => 'CR',
+			self::c_BEL  => 'BEL',
+			self::c_BS   => 'BS',
+			self::c_HT   => 'HT',
+			self::c_VT   => 'VT',
+			self::c_FF   => 'FF',
+			);
+
+	/* TELNET command characters
+	 * "Note that these codes and code sequences have the indicated meaning
+	 * only when immediately preceded by an IAC." RFC854
+	 */
 	const c_SE   = "\xF0"; //Subnegotiation End
 	const c_NOP  = "\xF1";
 	const c_DM   = "\xF2"; //Data Mark
@@ -63,32 +79,26 @@ class Telnet {
 	const c_DONT = "\xFE";
 	const c_IAC  = "\xFF";
 
-	private static $NVT_CODES = array(
-			self::c_NUL,
-			self::c_LF,
-			self::c_CR,
-			self::c_BEL,
-			self::c_BS,
-			self::c_HT,
-			self::c_VT,
-			self::c_FF,
-			self::c_SE,
-			self::c_NOP,
-			self::c_DM,
-			self::c_BRK,
-			self::c_IP,
-			self::c_AO,
-			self::c_AYT,
-			self::c_EC,
-			self::c_EL,
-			self::c_GA,
-			self::c_SB,
-			self::c_WILL,
-			self::c_WONT,
-			self::c_DO,
-			self::c_DONT,
-			self::c_IAC
+	private static $NVT_CMDS = array(
+			self::c_SE   => 'SE',
+			self::c_NOP  => 'NOP',
+			self::c_DM   => 'DM',
+			self::c_BRK  => 'BRK',
+			self::c_IP   => 'IP',
+			self::c_AO   => 'AO',
+			self::c_AYT  => 'AYT',
+			self::c_EC   => 'EC',
+			self::c_EL   => 'EL',
+			self::c_GA   => 'GA',
+			self::c_SB   => 'SB',
+			self::c_WILL => 'WILL',
+			self::c_WONT => 'WONT',
+			self::c_DO   => 'DO',
+			self::c_DONT => 'DONT',
+			self::c_IAC  => 'IAC'
 			);
+
+
 
 	private $global_buffer = '';
 
