@@ -441,9 +441,7 @@ class Telnet {
 	 */
 	protected function negotiateTelnetOptions() {
 		$c = $this->getc();
-		if (self::$DEBUG) {
-			printf("[CMD 0x%s]", bin2hex($c));
-		}
+		$str = sprintf("[CMD %s]", self::getNvtCmdStr($c));
 
 		switch ($c) {
 		case self::c_IAC:
@@ -452,23 +450,23 @@ class Telnet {
 		case self::c_DO: //FALLTHROUGH
 		case self::c_DONT:
 			$opt = $this->getc();
-			if (self::$DEBUG) {
-				printf("[OPT 0x%s]", bin2hex($opt));
-			}
+			$str .= sprintf("[OPT 0x%s]", bin2hex($opt));
 			fwrite($this->socket, self::c_IAC . self::c_WONT . $opt);
 			break;
 
 		case self::c_WILL: //FALLTHROUGH
 		case self::c_WONT:
 			$opt = $this->getc();
-			if (self::$DEBUG) {
-				printf("[OPT 0x%s]", bin2hex($opt));
-			}
+			$str .= sprintf("[OPT 0x%s]", bin2hex($opt));
 			fwrite($this->socket, self::c_IAC . self::c_DONT . $opt);
 			break;
 
 		default:
 			throw new Exception('Error: unknown control character ' . ord($c));
+		}
+
+		if (self::$DEBUG) {
+			print($str . "\n");
 		}
 
 		return self::TELNET_OK;
