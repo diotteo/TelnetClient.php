@@ -3,7 +3,7 @@
  * Telnet class
  *
  * Used to execute remote commands via telnet connection
- * Usess sockets functions and fgetc() to process result
+ * Uses sockets functions and fgetc() to process result
  *
  * All methods throw Exceptions on error
  *
@@ -24,7 +24,7 @@ class Telnet {
 	private $stream_timeout_sec;
 	private $stream_timeout_usec;
 
-	private $socket  = NULL;
+	private $socket = NULL;
 	private $buffer = NULL;
 	private $prompt;
 	private $errno;
@@ -109,7 +109,7 @@ class Telnet {
 		if (!$this->socket) {
 			throw new Exception("Cannot connect to $this->host on port $this->port");
 		}
-		
+
 		if (!empty($this->prompt)) {
 			$this->waitPrompt();
 		}
@@ -183,7 +183,7 @@ class Telnet {
 	public function setPrompt($str = '$') {
 		return $this->setRegexPrompt(preg_quote($str, '/'));
 	}
-	
+
 	/**
 	 * Sets a regex string to respond to.
 	 * This should be set to the last line of the command line prompt.
@@ -195,7 +195,7 @@ class Telnet {
 		$this->prompt = $str;
 		return self::TELNET_OK;
 	}
-	
+
 	/**
 	 * Sets the stream timeout.
 	 * 
@@ -206,7 +206,7 @@ class Telnet {
 		$this->stream_timeout_usec = (int)(fmod($timeout, 1) * 1000000);
 		$this->stream_timeout_sec = (int)$timeout;
 	}
-	
+
 	/**
 	 * Set if the buffer should be stripped from the buffer after reading.
 	 *
@@ -215,7 +215,7 @@ class Telnet {
 	 */
 	public function stripPromptFromBuffer($strip) {
 		$this->strip_prompt = $strip;
-	} // function stripPromptFromBuffer
+	}
 
 	/**
 	 * Gets character from the socket
@@ -321,7 +321,7 @@ class Telnet {
 	 */
 	protected function getBuffer() {
 		// Remove all carriage returns from line breaks
-		$buf =  preg_replace('/\r\n|\r/', "\n", $this->buffer);
+		$buf = preg_replace('/\r\n|\r/', "\n", $this->buffer);
 		// Cut last line from buffer (almost always prompt)
 		if ($this->strip_prompt) {
 			$buf = explode("\n", $buf);
