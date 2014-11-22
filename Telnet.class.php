@@ -63,6 +63,10 @@ class Telnet {
 	 * "Note that these codes and code sequences have the indicated meaning
 	 * only when immediately preceded by an IAC." RFC854
 	 */
+	/* RFC1123:
+	 * MUST:   SE, NOP, DM, IP, AO, AYT, SB
+	 * SHOULD: EOR, EC, EL, BRK
+	 */
 	const CMD_SE   = "\xF0"; //Subnegotiation End
 	const CMD_NOP  = "\xF1";
 	const CMD_DM   = "\xF2"; //Data Mark
