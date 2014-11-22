@@ -366,7 +366,7 @@ class Telnet {
 		$this->clearBuffer();
 
 		if ($add_newline == TRUE) {
-			$buffer .= "\n";
+			$buffer .= "\r\n";
 		}
 
 		$this->global_buffer .= $buffer;
