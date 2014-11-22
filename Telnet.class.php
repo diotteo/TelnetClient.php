@@ -17,6 +17,7 @@
  * Modified by Olivier Diotte <olivier+github@diotte.ca>
  */
 class Telnet {
+	private static $DEBUG = FALSE;
 
 	private $host;
 	private $port;
@@ -93,6 +94,21 @@ class Telnet {
 
 	const TELNET_ERROR = FALSE;
 	const TELNET_OK = TRUE;
+
+
+	/**
+	 * Ideally, this would work if subclasses
+	 * defined only their own static $DEBUG field, but the parent
+	 * class doesn't have access to children's private fields (unsurprisingly)
+	 *
+	 * Therefore, child classes need to define both their own $DEBUG field AND
+	 * copy this method. This seems to be the cleanest way to do it as
+	 * it breaks cleanly if a child class doesn't do it
+	 */
+	public static function setDebug($enable) {
+		static::$DEBUG = !!$enable;
+	}
+
 
 	/**
 	 * Constructor. Initialises host, port and timeout parameters
