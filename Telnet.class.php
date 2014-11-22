@@ -34,68 +34,69 @@ class Telnet {
 
 	/* NVT special characters
 	 * specified in the same order as in RFC854
-	 * same name as there, with a c_ prefix (to avoid clash with PHP keywords)
+	 * same name as there, with a NVT_ prefix (to avoid clash with PHP keywords)
 	 */
-	// Codes that have special meaning to the NVT Printer
-	const c_NUL  = "\x00";
-	const c_LF   = "\x0A";
-	const c_CR   = "\x0D";
 
-	const c_BEL  = "\x07";
-	const c_BS   = "\x08";
-	const c_HT   = "\x09";
-	const c_VT   = "\x0B";
-	const c_FF   = "\x0C";
+	// Codes that have special meaning to the NVT Printer
+	const NVT_NUL  = "\x00";
+	const NVT_LF   = "\x0A";
+	const NVT_CR   = "\x0D";
+
+	const NVT_BEL  = "\x07";
+	const NVT_BS   = "\x08";
+	const NVT_HT   = "\x09";
+	const NVT_VT   = "\x0B";
+	const NVT_FF   = "\x0C";
 
 	private static $NVTP_SPECIALS = array(
-			self::c_NUL  => 'NUL',
-			self::c_LF   => 'LF',
-			self::c_CR   => 'CR',
-			self::c_BEL  => 'BEL',
-			self::c_BS   => 'BS',
-			self::c_HT   => 'HT',
-			self::c_VT   => 'VT',
-			self::c_FF   => 'FF',
+			self::NVT_NUL  => 'NUL',
+			self::NVT_LF   => 'LF',
+			self::NVT_CR   => 'CR',
+			self::NVT_BEL  => 'BEL',
+			self::NVT_BS   => 'BS',
+			self::NVT_HT   => 'HT',
+			self::NVT_VT   => 'VT',
+			self::NVT_FF   => 'FF',
 			);
 
 	/* TELNET command characters
 	 * "Note that these codes and code sequences have the indicated meaning
 	 * only when immediately preceded by an IAC." RFC854
 	 */
-	const c_SE   = "\xF0"; //Subnegotiation End
-	const c_NOP  = "\xF1";
-	const c_DM   = "\xF2"; //Data Mark
-	const c_BRK  = "\xF3"; //Break
-	const c_IP   = "\xF4"; //Interrupt Process
-	const c_AO   = "\xF5"; //Abort Output
-	const c_AYT  = "\xF6"; //Are You There
-	const c_EC   = "\xF7"; //Erase Character
-	const c_EL   = "\xF8"; //Erase Line
-	const c_GA   = "\xF9"; //Go Ahead
-	const c_SB   = "\xFA"; //Subnegotiation (start)
-	const c_WILL = "\xFB";
-	const c_WONT = "\xFC";
-	const c_DO   = "\xFD";
-	const c_DONT = "\xFE";
-	const c_IAC  = "\xFF";
+	const CMD_SE   = "\xF0"; //Subnegotiation End
+	const CMD_NOP  = "\xF1";
+	const CMD_DM   = "\xF2"; //Data Mark
+	const CMD_BRK  = "\xF3"; //Break
+	const CMD_IP   = "\xF4"; //Interrupt Process
+	const CMD_AO   = "\xF5"; //Abort Output
+	const CMD_AYT  = "\xF6"; //Are You There
+	const CMD_EC   = "\xF7"; //Erase Character
+	const CMD_EL   = "\xF8"; //Erase Line
+	const CMD_GA   = "\xF9"; //Go Ahead
+	const CMD_SB   = "\xFA"; //Subnegotiation (start)
+	const CMD_WILL = "\xFB";
+	const CMD_WONT = "\xFC";
+	const CMD_DO   = "\xFD";
+	const CMD_DONT = "\xFE";
+	const CMD_IAC  = "\xFF";
 
-	private static $NVT_CMDS = array(
-			self::c_SE   => 'SE',
-			self::c_NOP  => 'NOP',
-			self::c_DM   => 'DM',
-			self::c_BRK  => 'BRK',
-			self::c_IP   => 'IP',
-			self::c_AO   => 'AO',
-			self::c_AYT  => 'AYT',
-			self::c_EC   => 'EC',
-			self::c_EL   => 'EL',
-			self::c_GA   => 'GA',
-			self::c_SB   => 'SB',
-			self::c_WILL => 'WILL',
-			self::c_WONT => 'WONT',
-			self::c_DO   => 'DO',
-			self::c_DONT => 'DONT',
-			self::c_IAC  => 'IAC'
+	private static $CMDS = array(
+			self::CMD_SE   => 'SE',
+			self::CMD_NOP  => 'NOP',
+			self::CMD_DM   => 'DM',
+			self::CMD_BRK  => 'BRK',
+			self::CMD_IP   => 'IP',
+			self::CMD_AO   => 'AO',
+			self::CMD_AYT  => 'AYT',
+			self::CMD_EC   => 'EC',
+			self::CMD_EL   => 'EL',
+			self::CMD_GA   => 'GA',
+			self::CMD_SB   => 'SB',
+			self::CMD_WILL => 'WILL',
+			self::CMD_WONT => 'WONT',
+			self::CMD_DO   => 'DO',
+			self::CMD_DONT => 'DONT',
+			self::CMD_IAC  => 'IAC'
 			);
 
 
@@ -135,7 +136,7 @@ class Telnet {
 
 
 	public static function getNvtCmdStr($code) {
-		return self::getCodeStrOrHexStr($code, self::$NVT_CMDS);
+		return self::getCodeStrOrHexStr($code, self::$CMDS);
 	}
 
 
@@ -357,7 +358,7 @@ class Telnet {
 			}
 
 			// Interpret As Command
-			if ($c == self::c_IAC) {
+			if ($c == self::CMD_IAC) {
 				if (self::$DEBUG) {
 					printf("[IAC 0x%s]", bin2hex($c));
 				}
@@ -377,7 +378,7 @@ class Telnet {
 				return self::TELNET_OK;
 			}
 
-		} while ($c != self::c_NUL);
+		} while ($c != self::NVT_NUL);
 	}
 
 	/**
@@ -444,21 +445,21 @@ class Telnet {
 		$str = sprintf("[CMD %s]", self::getNvtCmdStr($c));
 
 		switch ($c) {
-		case self::c_IAC:
+		case self::CMD_IAC:
 			throw new Exception('Error: Something Wicked Happened');
 			break;
-		case self::c_DO: //FALLTHROUGH
-		case self::c_DONT:
+		case self::CMD_DO: //FALLTHROUGH
+		case self::CMD_DONT:
 			$opt = $this->getc();
 			$str .= sprintf("[OPT 0x%s]", bin2hex($opt));
-			fwrite($this->socket, self::c_IAC . self::c_WONT . $opt);
+			fwrite($this->socket, self::CMD_IAC . self::CMD_WONT . $opt);
 			break;
 
-		case self::c_WILL: //FALLTHROUGH
-		case self::c_WONT:
+		case self::CMD_WILL: //FALLTHROUGH
+		case self::CMD_WONT:
 			$opt = $this->getc();
 			$str .= sprintf("[OPT 0x%s]", bin2hex($opt));
-			fwrite($this->socket, self::c_IAC . self::c_DONT . $opt);
+			fwrite($this->socket, self::CMD_IAC . self::CMD_DONT . $opt);
 			break;
 
 		default:
