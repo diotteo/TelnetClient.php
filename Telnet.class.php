@@ -106,7 +106,7 @@ class Telnet {
 
 	const OPT_TXBIN     = "\x00"; //Transmit binary, RFC856
 	const OPT_ECHO      = "\x01"; //Echo, RFC857
-	const OPT_SGA       = "\x03"; //Suppress Go Ahead, RFC858
+	const OPT_SGA       = "\x03"; //Suppress Go Ahead, RFC858 (makes connection full-duplex instead of half-duplex)
 	const OPT_STATUS    = "\x05"; //Status, RFC859
 	const OPT_TIMMRK    = "\x06"; //Timing Mark, RFC860
 	const OPT_EXTOPL    = "\xFF"; //Extended options list, RFC861
