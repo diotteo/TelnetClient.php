@@ -449,6 +449,9 @@ class Telnet {
 	 * Reads socket until prompt is encountered
 	 */
 	protected function waitPrompt() {
+		if (self::$DEBUG) {
+			print("\nWaiting for prompt \"{$this->prompt}\"\n");
+		}
 		return $this->readTo($this->prompt);
 	}
 }
