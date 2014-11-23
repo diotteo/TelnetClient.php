@@ -295,7 +295,10 @@ class TelnetClient {
 			$this->setPrompt($passwordPrompt);
 			$this->waitPrompt();
 			$this->write($password);
-			$this->setPrompt($prompt);
+
+			//Reset prompt
+			$this->prompt = $prompt;
+
 			$this->waitPrompt();
 		} catch (Exception $e) {
 			throw new Exception("Login failed: {$e->getMessage()}");
