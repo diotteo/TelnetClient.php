@@ -442,7 +442,7 @@ class TelnetClient {
 		// clear buffer from last command
 		$this->clearBuffer();
 
-		if ($add_newline == TRUE) {
+		if ($add_newline) {
 			$buffer .= self::NVT_CR . self::NVT_LF;;
 		}
 
