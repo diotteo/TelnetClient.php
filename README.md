@@ -1,4 +1,4 @@
-Telnet.class.php
+TelnetClient.php
 ================
 
 Telnet client implementation in PHP
@@ -6,12 +6,12 @@ Telnet client implementation in PHP
 Usage example:
 ---
 ```php
-require_once(__DIR__ . '/Telnet.class.php');
+require_once(__DIR__ . '/TelnetClient.php');
 
 //Uncomment this to get debug logging
-//Telnet::setDebug(true);
+//TelnetClient::setDebug(true);
 
-$telnet = new Telnet('127.0.0.1', 23, 10, '');
+$telnet = new TelnetClient('127.0.0.1', 23, 10, '');
 $telnet->login('telnetuser', 'weak');
 $cmdResult = $telnet->exec('ls /');
 
