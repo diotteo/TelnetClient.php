@@ -424,6 +424,7 @@ class TelnetClient {
 				return self::TELNET_OK;
 			}
 
+		//FIXME: This loop condition makes no sense, NUL has no special meaning (it literally means 'no operation')
 		} while ($c != self::NVT_NUL);
 	}
 
