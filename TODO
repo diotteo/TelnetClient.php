@@ -1,3 +1,6 @@
+-Don't automatically connect() in ctor
+-Allow connecting without looking for a prompt (negotiate options only maybe?)
+-Allow user to get output (login header and what not)
 -Implement Binary Mode
 -Investigate whether we need to implement the negotiation state-machine described in RFC 1143 (Q method)
 -Add examples
