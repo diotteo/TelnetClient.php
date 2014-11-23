@@ -39,8 +39,8 @@ class TelnetClient {
 
 	// Codes that have special meaning to the NVT Printer
 	const NVT_NUL  = "\x00";
-	const NVT_LF   = "\x0A";
-	const NVT_CR   = "\x0D";
+	const NVT_LF   = "\n"; //"\x0A";
+	const NVT_CR   = "\r"; //"\x0D";
 
 	const NVT_BEL  = "\x07";
 	const NVT_BS   = "\x08";
@@ -443,7 +443,7 @@ class TelnetClient {
 		$this->clearBuffer();
 
 		if ($add_newline == TRUE) {
-			$buffer .= "\r\n";
+			$buffer .= self::NVT_CR . self::NVT_LF;;
 		}
 
 		$this->global_buffer .= $buffer;
