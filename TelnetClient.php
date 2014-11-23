@@ -301,7 +301,7 @@ class TelnetClient {
 
 			$this->waitPrompt();
 		} catch (Exception $e) {
-			throw new Exception("Login failed: {$e->getMessage()}");
+			throw new Exception("Login failed", 0, $e);
 		}
 
 		return self::TELNET_OK;
