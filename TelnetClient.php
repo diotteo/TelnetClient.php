@@ -32,6 +32,9 @@ class TelnetClient {
 	private $errstr;
 	private $strip_prompt = TRUE;
 
+	private $state;
+	private $a_c;
+
 	/* NVT special characters
 	 * specified in the same order as in RFC854
 	 * same name as there, with a NVT_ prefix (to avoid clash with PHP keywords)
@@ -139,6 +142,8 @@ class TelnetClient {
 			);
 
 
+	const STATE_NORMAL = 0;
+
 	private $global_buffer = '';
 
 	const TELNET_ERROR = FALSE;
@@ -198,8 +203,11 @@ class TelnetClient {
 		$this->host = $host;
 		$this->port = $port;
 		$this->timeout = $timeout;
-		$this->setPrompt($prompt);
-		$this->setStreamTimeout($stream_timeout);
+
+		$this->state = self::STATE_NORMAL;
+
+		//$this->setPrompt($prompt);
+		//$this->setStreamTimeout($stream_timeout);
 
 		$this->connect();
 	}
@@ -241,9 +249,9 @@ class TelnetClient {
 		}
 		stream_set_blocking($this->socket, 0);
 
-		if (!empty($this->prompt)) {
-			$this->waitPrompt();
-		}
+		//if (!empty($this->prompt)) {
+		//	$this->waitPrompt();
+		//}
 
 		return self::TELNET_OK;
 	}
@@ -384,43 +392,134 @@ class TelnetClient {
 	}
 
 
-	public function waitForData($timeout = 10) {
+	/**
+	 * Reads up to $length bytes of data (TELNET commands are not counted) or wait for $timeout seconds, whichever occurs first
+	 *
+	 * @param mixed $timeout: maximum delay in seconds. Either a non-negative int or null (infinite timeout)
+	 * @param mixed $length: maximum number of data bytes to read. Either a non-negative int or null (infinite length)
+	 *
+	 * @return string the raw data read as a string
+	 */
+	public function waitForData($timeout = 10, $length = null) {
 		$endTs = time() + $timeout;
 
-		$c = null;
-		while (time() < $endTs) {
-			$nextc = $this->asyncGetc();
-			if (is_null($c)) {
-				$c = $nextc;
+		$data = '';
+		$a_c = array();
+		$endc = null;
+		while ((is_null($timeout) || time() < $endTs)
+				&& (is_null($length) || strlen($data) < $length)) {
+			$isGetMoreData = false;
+			$c = $this->asyncGetc();
+			if ($c === false) {
+				usleep(5);
 				continue;
 			}
+			$a_c[] = $c;
 
 			switch ($this->state) {
 			case self::STATE_NORMAL:
-				switch ($c) {
+				switch ($a_c[0]) {
 				case self::CMD_IAC:
-					if ($nextc !== self::CMD_IAC) {
-						$this->state = self::STATE_CMD;
+					if (count($a_c) < 2) {
+						$isGetMoreData = true;
+						break;
+					}
+					$cmd = $a_c[1];
+					if ($cmd === self::CMD_IAC) {
+						/* Is this supposed to happen in normal mode? (Yes,
+						 * "With the current set-up, only the IAC need be doubled to be sent as data" --RFC854) */
+
+						//TODO: Figure out how to make sure we remove the duplicated IAC, yet don't forget that this actually isn't a command
+						//Remove duplicate self::CMD_IAC ($a_c[1])
+						//array_splice($a_c, 1, 1);
+						$a_c = array(self::CMD_IAC);
+
+					} else if (count($a_c) < 3) {
+						//Get more data
+						$isGetMoreData = true;
+					} else {
+						$opt = $a_c[2];
+						$replyCmd = null;
+						switch ($cmd) {
+						case self::CMD_SB:
+							if ($opt === self::CMD_SE) {
+								//Empty subnegotiation?! (pass)
+							} else if (end($a_c) !== self::CMD_SE) {
+								//Get more data
+								$isGetMoreData = true;
+							} else {
+								//TODO: Handle subnegotiation here
+								if (self::$DEBUG) {
+									print("Silently dropping subnegotiation (to be implemented)\n");
+								}
+							}
+							break;
+
+						//TODO: Handle other commands
+						case self::CMD_DO: //FALLTHROUGH
+						case self::CMD_DONT:
+							$replyCmd = self::CMD_WONT;
+							break;
+
+						case self::CMD_WILL:
+							$replyCmd = self::CMD_DONT;
+							break;
+						case self::CMD_WONT:
+							//Pass, we are not supposed to "acknowledge" WONTs
+							break;
+
+						default:
+							if (self::$DEBUG) {
+								print('Ignoring unknown command character 0x' . bin2hex($cmd) . "\n");
+							}
+						}
+
+						if (!is_null($replyCmd)) {
+							fwrite($this->socket, self::CMD_IAC . $replyCmd . $opt);
+
+							if (self::$DEBUG) {
+								$str = sprintf("[CMD %s]", self::getCmdStr($cmd));
+								$str .= sprintf("[OPT %s]", self::getOptStr($opt));
+								print($str . "\n");
+							}
+						}
+						if (!$isGetMoreData) {
+							$a_c = array();
+						}
 					}
 					break;
 				}
 				break;
-			case self::STATE_BINARY:
-				break;
-			case self::STATE_CMD:
-				switch ($c) {
-				case self::CMD_IAC:
-					$this->state = self::
+			//case self::STATE_BINARY:
+			//	break;
+			//case self::STATE_CMD:
+			//	switch ($c) {
+			//	case self::CMD_IAC:
+			//		$this->state = self::
+			//	}
+			//	break;
+			//case self::STATE_OPT:
+			//	break;
+			//case self::STATE_NEG_NO:
+			//	break;
+			//case self::STATE_NEG_YES:
+			//	break;
+			}
+
+			if (!$isGetMoreData && count($a_c) > 0) {
+				$newData = implode($a_c);
+				preg_replace('/' . self::NVT_CR . self::NVT_LF . '/', "\n", $newData);
+				if (self::$DEBUG) {
+					print("Adding " . (ctype_print($newData) ? "\"{$newData}\"" : "(0x" . bin2hex($newData) . ")") . " to buffer\n");
+					//print("Adding \"{$newData}\" (0x" . bin2hex($newData) . ") to buffer (count = " . count($a_c) . " len = " . strlen($newData) . ")\n");
+					//var_dump($a_c);
 				}
-				break;
-			case self::STATE_OPT:
-				break;
-			case self::STATE_NEG_NO:
-				break;
-			case self::STATE_NEG_YES:
-				break;
+				$data .= $newData;
+				$a_c = array();
 			}
 		}
+
+		return $data;
 	}
 
 
