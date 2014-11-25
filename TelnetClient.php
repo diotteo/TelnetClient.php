@@ -239,6 +239,7 @@ class TelnetClient {
 		if (!$this->socket) {
 			throw new Exception("Cannot connect to $this->host on port $this->port");
 		}
+		stream_set_blocking($this->socket, 0);
 
 		if (!empty($this->prompt)) {
 			$this->waitPrompt();
@@ -351,6 +352,16 @@ class TelnetClient {
 		$this->strip_prompt = $strip;
 	}
 
+
+	private function asyncGetc() {
+		$c = fgetc($this->socket);
+		if ($c !== FALSE) {
+			$this->global_buffer .= $c;
+		}
+		return $c;
+	}
+
+
 	/**
 	 * Gets character from the socket
 	 *
@@ -371,6 +382,47 @@ class TelnetClient {
 	public function clearBuffer() {
 		$this->buffer = '';
 	}
+
+
+	public function waitForData($timeout = 10) {
+		$endTs = time() + $timeout;
+
+		$c = null;
+		while (time() < $endTs) {
+			$nextc = $this->asyncGetc();
+			if (is_null($c)) {
+				$c = $nextc;
+				continue;
+			}
+
+			switch ($this->state) {
+			case self::STATE_NORMAL:
+				switch ($c) {
+				case self::CMD_IAC:
+					if ($nextc !== self::CMD_IAC) {
+						$this->state = self::STATE_CMD;
+					}
+					break;
+				}
+				break;
+			case self::STATE_BINARY:
+				break;
+			case self::STATE_CMD:
+				switch ($c) {
+				case self::CMD_IAC:
+					$this->state = self::
+				}
+				break;
+			case self::STATE_OPT:
+				break;
+			case self::STATE_NEG_NO:
+				break;
+			case self::STATE_NEG_YES:
+				break;
+			}
+		}
+	}
+
 
 	/**
 	 * Reads characters from the socket and adds them to command buffer.
@@ -394,13 +446,10 @@ class TelnetClient {
 				throw new Exception("Couldn't find the requested : '$prompt' within {$this->timeout} seconds");
 			}
 
-			$c = $this->getc();
+			$c = $this->asyncGetc();
 
 			if ($c === FALSE) {
-				if (empty($prompt)) {
-					return self::TELNET_OK;
-				}
-				throw new Exception("Couldn't find the requested : '" . $prompt . "', it was not in the data returned from server: " . $this->buffer);
+				continue;
 			}
 
 			// Interpret As Command
