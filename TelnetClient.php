@@ -246,10 +246,6 @@ class TelnetClient {
 		}
 		stream_set_blocking($this->socket, 0);
 
-		//if (!empty($this->prompt)) {
-		//	$this->waitPrompt();
-		//}
-
 		return self::TELNET_OK;
 	}
 
