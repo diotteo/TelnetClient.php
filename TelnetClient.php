@@ -215,10 +215,12 @@ class TelnetClient {
 		$this->global_buffer = NULL;
 	}
 
+
 	/**
-	 * Attempts connection to remote host. Returns TRUE if successful.
+	 * Attempts connection to remote host.
 	 *
-	 * @return boolean
+	 * @param float $connect_timeout the connection timeout (fsockopen)
+	 * @return boolean Returns TRUE if successful
 	 */
 	public function connect($connect_timeout) {
 		// check if we need to convert host to IP
