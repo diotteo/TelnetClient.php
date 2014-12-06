@@ -236,8 +236,7 @@ class TelnetClient {
 
 		// attempt connection - suppress warnings
 		$this->socket = @fsockopen($this->host, $this->port, $this->errno, $this->errstr, $this->timeout);
-
-		if (!$this->socket) {
+		if ($this->socket === false) {
 			throw new Exception("Cannot connect to $this->host on port $this->port");
 		}
 		stream_set_blocking($this->socket, 0);
@@ -538,7 +537,8 @@ class TelnetClient {
 		}
 
 		$this->global_buffer .= $buffer;
-		if (!fwrite($this->socket, $buffer) < 0) {
+		$ret = fwrite($this->socket, $buffer);
+		if ($ret !== strlen($buffer)) { //|| $ret === FALSE) {
 			throw new Exception("Error writing to socket");
 		}
 
