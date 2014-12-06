@@ -333,17 +333,6 @@ class TelnetClient {
 	}
 
 	/**
-	 * Sets the stream timeout.
-	 * 
-	 * @param float $timeout
-	 * @return void
-	 */
-	public function setStreamTimeout($timeout) {
-		$this->stream_timeout_usec = (int)(fmod($timeout, 1) * 1000000);
-		$this->stream_timeout_sec = (int)$timeout;
-	}
-
-	/**
 	 * Set if the buffer should be stripped from the buffer after reading.
 	 *
 	 * @param $strip boolean if the prompt should be stripped.
