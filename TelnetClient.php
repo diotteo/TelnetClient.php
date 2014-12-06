@@ -400,6 +400,7 @@ class TelnetClient {
 	 *
 	 * @return string the raw data read as a string
 	 */
+	//TODO: Decide whether to allow infinite reading (null, null) and add a callback, or disallow it
 	public function waitForData($timeout = 10, $length = null) {
 		$endTs = time() + $timeout;
 
@@ -429,9 +430,8 @@ class TelnetClient {
 						/* Is this supposed to happen in normal mode? (Yes,
 						 * "With the current set-up, only the IAC need be doubled to be sent as data" --RFC854) */
 
-						//TODO: Figure out how to make sure we remove the duplicated IAC, yet don't forget that this actually isn't a command
-						//Remove duplicate self::CMD_IAC ($a_c[1])
-						//array_splice($a_c, 1, 1);
+						//Add one IAC character to the data
+						$isGetMoreData = false;
 						$a_c = array(self::CMD_IAC);
 
 					} else if (count($a_c) < 3) {
@@ -488,6 +488,9 @@ class TelnetClient {
 						}
 					}
 					break;
+
+				default:
+					//Pass, handled below after the switch ()
 				}
 				break;
 			//case self::STATE_BINARY:
