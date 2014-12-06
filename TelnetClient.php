@@ -522,60 +522,6 @@ class TelnetClient {
 		return $data;
 	}
 
-
-	/**
-	 * Reads characters from the socket and adds them to command buffer.
-	 * Handles telnet control characters. Stops when prompt is ecountered.
-	 *
-	 * @param string $prompt
-	 * @return boolean
-	 */
-	protected function readTo($prompt) {
-		if (!$this->socket) {
-			throw new Exception("Telnet connection closed");
-		}
-
-		// clear the buffer
-		$this->clearBuffer();
-
-		$until_t = time() + $this->timeout;
-		do {
-			// time's up (loop can be exited at end or through continue!)
-			if (time() > $until_t) {
-				throw new Exception("Couldn't find the requested : '$prompt' within {$this->timeout} seconds");
-			}
-
-			$c = $this->asyncGetc();
-
-			if ($c === FALSE) {
-				continue;
-			}
-
-			// Interpret As Command
-			if ($c == self::CMD_IAC) {
-				if (self::$DEBUG) {
-					printf("[IAC 0x%s]", bin2hex($c));
-				}
-				if ($this->negotiateTelnetOptions()) {
-					continue;
-				}
-			}
-
-			// append current char to global buffer
-			$this->buffer .= $c;
-			if (self::$DEBUG) {
-				printf($c);
-			}
-
-			// we've encountered the prompt. Break out of the loop
-			if (!empty($prompt) && preg_match("/{$prompt}$/", $this->buffer)) {
-				return self::TELNET_OK;
-			}
-
-		//FIXME: This loop condition makes no sense, NUL has no special meaning (it literally means 'no operation')
-		} while ($c != self::NVT_NUL);
-	}
-
 	/**
 	 * Write command to a socket
 	 *
@@ -627,50 +573,6 @@ class TelnetClient {
 	 */
 	public function getGlobalBuffer() {
 		return $this->global_buffer;
-	}
-
-	/**
-	 * Telnet control character magic
-	 *
-	 * @param string $command Character to check
-	 * @return boolean
-	 */
-	protected function negotiateTelnetOptions() {
-		$cmd = $this->getc();
-
-		$replyCmd = null;
-		switch ($cmd) {
-		case self::CMD_IAC: //FIXME: This is supposed to happen in binary mode
-			throw new Exception('Error: Something Wicked Happened');
-			break;
-		case self::CMD_DO: //FALLTHROUGH
-		case self::CMD_DONT:
-			$replyCmd = self::CMD_WONT;
-			break;
-
-		case self::CMD_WILL: //FALLTHROUGH
-		case self::CMD_WONT:
-			$replyCmd = self::CMD_DONT;
-			break;
-
-		default:
-			if (self::$DEBUG) {
-				print('Ignoring unknown command character 0x' . bin2hex($cmd) . "\n");
-			}
-			//FIXME: Should we return OK?
-			return self::TELNET_OK;
-		}
-
-		$opt = $this->getc();
-		fwrite($this->socket, self::CMD_IAC . $replyCmd . $opt);
-
-		if (self::$DEBUG) {
-			$str = sprintf("[CMD %s]", self::getCmdStr($cmd));
-			$str .= sprintf("[OPT %s]", self::getOptStr($opt));
-			print($str . "\n");
-		}
-
-		return self::TELNET_OK;
 	}
 
 	/**
