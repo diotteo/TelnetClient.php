@@ -582,6 +582,7 @@ class TelnetClient {
 		if (self::$DEBUG) {
 			print("\nWaiting for prompt \"{$this->prompt}\"\n");
 		}
-		return $this->readTo($this->prompt);
+
+		$data = $this->waitForData(1, strlen($this->prompt));
 	}
 }
