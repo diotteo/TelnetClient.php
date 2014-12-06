@@ -194,23 +194,14 @@ class TelnetClient {
 	 *
 	 * @param string $host Host name or IP addres
 	 * @param int $port TCP port number
-	 * @param int $timeout Connection timeout in seconds
-	 * @param string $prompt Telnet prompt string
-	 * @param float $streamTimeout Stream timeout in decimal seconds
 	 * @return void
 	 */
-	public function __construct($host = '127.0.0.1', $port = '23', $timeout = 10, $prompt = '$', $stream_timeout = 1) {
+	public function __construct($host = '127.0.0.1', $port = '23') {
 		$this->host = $host;
 		$this->port = $port;
-		$this->timeout = $timeout;
-
 		$this->state = self::STATE_NORMAL;
-
-		//$this->setPrompt($prompt);
-		//$this->setStreamTimeout($stream_timeout);
-
-		$this->connect();
 	}
+
 
 	/**
 	 * Destructor. Cleans up socket connection and command buffer
@@ -229,7 +220,7 @@ class TelnetClient {
 	 *
 	 * @return boolean
 	 */
-	public function connect() {
+	public function connect($connect_timeout) {
 		// check if we need to convert host to IP
 		if (!preg_match('/([0-9]{1,3}\\.){3,3}[0-9]{1,3}/', $this->host)) {
 			$ip = gethostbyname($this->host);
