@@ -22,8 +22,8 @@ class TelnetClient {
 	private $host;
 	private $port;
 	private $timeout;
-	private $stream_timeout_sec;
-	private $stream_timeout_usec;
+	private $connect_timeout; //Timeout to connect to remote
+	private $socket_timeout; //Timeout to wait for data
 
 	private $socket = NULL;
 	private $buffer = NULL;
@@ -199,7 +199,10 @@ class TelnetClient {
 	public function __construct($host = '127.0.0.1', $port = '23') {
 		$this->host = $host;
 		$this->port = $port;
+
 		$this->state = self::STATE_NORMAL;
+		$this->connect_timeout = 1.0;
+		$this->socket_timeout = 10.0;
 	}
 
 
@@ -223,6 +226,8 @@ class TelnetClient {
 	 * @return boolean Returns TRUE if successful
 	 */
 	public function connect($connect_timeout) {
+		$this->connect_timeout = $connect_timeout;
+
 		// check if we need to convert host to IP
 		if (!preg_match('/([0-9]{1,3}\\.){3,3}[0-9]{1,3}/', $this->host)) {
 			$ip = gethostbyname($this->host);
@@ -235,7 +240,7 @@ class TelnetClient {
 		}
 
 		// attempt connection - suppress warnings
-		$this->socket = @fsockopen($this->host, $this->port, $this->errno, $this->errstr, $this->timeout);
+		$this->socket = @fsockopen($this->host, $this->port, $this->errno, $this->errstr, $this->connect_timeout);
 		if ($this->socket === false) {
 			throw new Exception("Cannot connect to $this->host on port $this->port");
 		}
@@ -578,6 +583,7 @@ class TelnetClient {
 			print("\nWaiting for prompt \"{$this->prompt}\"\n");
 		}
 
-		$data = $this->waitForData(1, strlen($this->prompt));
+		$data = $this->waitForData($this->socket_timeout, 1);
+
 	}
 }
