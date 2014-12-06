@@ -398,7 +398,6 @@ class TelnetClient {
 
 		$data = '';
 		$a_c = array();
-		$endc = null;
 		while ((is_null($timeout) || time() < $endTs)
 				&& (is_null($length) || strlen($data) < $length)) {
 			$isGetMoreData = false;
