@@ -241,7 +241,7 @@ class TelnetClient {
 
 		// attempt connection - suppress warnings
 		$this->socket = @fsockopen($this->host, $this->port, $this->errno, $this->errstr, $this->connect_timeout);
-		if ($this->socket === false) {
+		if ($this->socket === FALSE) {
 			throw new Exception("Cannot connect to $this->host on port $this->port");
 		}
 		stream_set_blocking($this->socket, 0);
@@ -392,22 +392,22 @@ class TelnetClient {
 	/**
 	 * Reads up to $length bytes of data (TELNET commands are not counted) or wait for $timeout seconds, whichever occurs first
 	 *
-	 * @param mixed $timeout: maximum delay in seconds. Either a non-negative int or null (infinite timeout)
-	 * @param mixed $length: maximum number of data bytes to read. Either a non-negative int or null (infinite length)
+	 * @param mixed $timeout: maximum delay in seconds. Either a non-negative int or NULL (infinite timeout)
+	 * @param mixed $length: maximum number of data bytes to read. Either a non-negative int or NULL (infinite length)
 	 *
 	 * @return string the raw data read as a string
 	 */
-	//TODO: Decide whether to allow infinite reading (null, null) and add a callback, or disallow it
-	public function waitForData($timeout = 10, $length = null) {
+	//TODO: Decide whether to allow infinite reading (NULL, NULL) and add a callback, or disallow it
+	public function waitForData($timeout = 10, $length = NULL) {
 		$endTs = time() + $timeout;
 
 		$data = '';
 		$a_c = array();
 		while ((is_null($timeout) || time() < $endTs)
 				&& (is_null($length) || strlen($data) < $length)) {
-			$isGetMoreData = false;
+			$isGetMoreData = FALSE;
 			$c = $this->asyncGetc();
-			if ($c === false) {
+			if ($c === FALSE) {
 				usleep(5);
 				continue;
 			}
@@ -418,7 +418,7 @@ class TelnetClient {
 				switch ($a_c[0]) {
 				case self::CMD_IAC:
 					if (count($a_c) < 2) {
-						$isGetMoreData = true;
+						$isGetMoreData = TRUE;
 						break;
 					}
 					$cmd = $a_c[1];
@@ -427,22 +427,22 @@ class TelnetClient {
 						 * "With the current set-up, only the IAC need be doubled to be sent as data" --RFC854) */
 
 						//Add one IAC character to the data
-						$isGetMoreData = false;
+						$isGetMoreData = FALSE;
 						$a_c = array(self::CMD_IAC);
 
 					} else if (count($a_c) < 3) {
 						//Get more data
-						$isGetMoreData = true;
+						$isGetMoreData = TRUE;
 					} else {
 						$opt = $a_c[2];
-						$replyCmd = null;
+						$replyCmd = NULL;
 						switch ($cmd) {
 						case self::CMD_SB:
 							if ($opt === self::CMD_SE) {
 								//Empty subnegotiation?! (pass)
 							} else if (end($a_c) !== self::CMD_SE) {
 								//Get more data
-								$isGetMoreData = true;
+								$isGetMoreData = TRUE;
 							} else {
 								//TODO: Handle subnegotiation here
 								if (self::$DEBUG) {
