@@ -350,18 +350,6 @@ class TelnetClient {
 
 
 	/**
-	 * Gets character from the socket
-	 *
-	 * @return void
-	 */
-	protected function getc() {
-		stream_set_timeout($this->socket, $this->stream_timeout_sec, $this->stream_timeout_usec);
-		$c = fgetc($this->socket);
-		$this->global_buffer .= $c;
-		return $c;
-	}
-
-	/**
 	 * Clears internal command buffer
 	 *
 	 * @return void
@@ -374,24 +362,31 @@ class TelnetClient {
 	/**
 	 * Reads up to $length bytes of data (TELNET commands are not counted) or wait for $timeout seconds, whichever occurs first
 	 *
-	 * @param mixed $timeout: maximum delay in seconds. Either a non-negative int or NULL (infinite timeout)
 	 * @param mixed $length: maximum number of data bytes to read. Either a non-negative int or NULL (infinite length)
 	 *
 	 * @return string the raw data read as a string
 	 */
-	//TODO: Decide whether to allow infinite reading (NULL, NULL) and add a callback, or disallow it
-	public function waitForData($timeout = 10, $length = NULL) {
-		$endTs = time() + $timeout;
+	private function waitForData($length = NULL, &$hasTimedout) {
+
+		if (is_null($length) && is_null($this->socket_timeout)) {
+			throw new ErrorException('Would wait infinitely');
+		} else if (!is_null($length) && (!is_int($length) || $length < 1)) {
+			throw new InvalidArgumentException('$length must be a positive int');
+		}
 
 		$data = '';
+		$endTs = microtime(TRUE) + $this->socket_timeout;
 		$a_c = array();
-		while ((is_null($timeout) || time() < $endTs)
+		while ((is_null($timeout) || microtime(TRUE) < $endTs)
 				&& (is_null($length) || strlen($data) < $length)) {
 			$isGetMoreData = FALSE;
 			$c = $this->asyncGetc();
 			if ($c === FALSE) {
 				usleep(5);
 				continue;
+			} else {
+				//Reset the timeout
+				$endTs = microtime(TRUE) + $this->socket_timeout;
 			}
 			$a_c[] = $c;
 
@@ -562,10 +557,18 @@ class TelnetClient {
 	 */
 	protected function waitPrompt() {
 		if (self::$DEBUG) {
-			print("\nWaiting for prompt \"{$this->prompt}\"\n");
+			print("\nWaiting for prompt \"{$this->regexPrompt}\"\n");
 		}
 
-		$data = $this->waitForData($this->socket_timeout, 1);
+		$this->clearBuffer();
+		do {
+			$data = $this->waitForData(1, $hasTimedout);
+			$this->buffer .= $data;
+			$this->global_buffer .= $data;
 
+			if ($hasTimedout) {
+				throw new ErrorException("Connection timed out");
+			}
+		} while (preg_match("/{$this->regexPrompt}$/", $this->buffer) == 0);
 	}
 }
