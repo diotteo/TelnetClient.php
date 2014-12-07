@@ -251,11 +251,12 @@ class TelnetClient {
 	 * @param string $host Host name or IP addres
 	 * @param int $port TCP port number
 	 * @param float $connect_timeout the timeout for connecting to the host
+	 * @param string $prompt the default prompt
 	 * @param float|null $socket_timeout the timeout to wait for new data (null = infinite)
 	 * @return void
 	 * @throws \InvalidArgumentException if an argument is invalid
 	 */
-	public function __construct($host = '127.0.0.1', $port = 23, $connect_timeout = 1.0, $socket_timeout = 10.0) {
+	public function __construct($host = '127.0.0.1', $port = 23, $connect_timeout = 1.0, $prompt = '$', $socket_timeout = 10.0) {
 		$this->host = $host;
 
 		if (!is_int($port)) {
@@ -267,11 +268,8 @@ class TelnetClient {
 			throw new \InvalidArgumentException('connect_timeout must be float');
 		}
 		$this->connect_timeout = $connect_timeout;
-		if (!is_null($socket_timeout)
-				&& !(is_float($socket_timeout) && $socket_timeout >= 0.0)) {
-			throw new \InvalidArgumentException('socket_timeout must be non-negative float or null');
-		}
-		$this->socket_timeout = $socket_timeout;
+		$this->setSocketTimeout($socket_timeout);
+		$this->setPrompt($prompt);
 
 		$this->state = self::STATE_DEFAULT;
 	}
@@ -329,6 +327,37 @@ class TelnetClient {
 			$this->socket = null;
 		}
 		return self::TELNET_OK;
+	}
+
+
+	/**
+	 * @deprecated please use setSocketTimeout()
+	 */
+	public function setStreamTimeout($socket_timeout) {
+		return $this->setSocketTimeout($socket_timeout);
+	}
+
+
+	/**
+	 * @param float|null $socket_timeout the timeout to wait for new data (null = infinite)
+	 * @return void
+	 */
+	public function setSocketTimeout($socket_timeout) {
+		if (!is_null($socket_timeout)
+				&& !(is_float($socket_timeout) && $socket_timeout >= 0.0)) {
+			throw new \InvalidArgumentException('socket_timeout must be non-negative float or null');
+		}
+		$this->socket_timeout = $socket_timeout;
+	}
+
+
+	/**
+	 * Returns the time, in seconds, to wait between characters (when waiting for new data) before timing out
+	 *
+	 * @return float|null the current socket timeout (null = infinite)
+	 */
+	public function getSocketTimeout() {
+		return $this->socket_timeout;
 	}
 
 
@@ -413,6 +442,16 @@ class TelnetClient {
 
 
 	/**
+	 * @deprecated please use waitForNbData(1, $hasTimedout);
+	 * Note: This function doesn't add the returned characters to the buffer nor the global buffer
+	 */
+	protected function getc() {
+		$c = $this->waitForNbData(1, $hasTimedout);
+		return $c;
+	}
+
+
+	/**
 	 * Clears internal command buffer
 	 *
 	 * @return void
@@ -425,7 +464,8 @@ class TelnetClient {
 	/**
 	 * Reads up to $length bytes of data (TELNET commands are not counted) or wait for $this->socket_timeout seconds, whichever occurs first
 	 *
-	 * @param int|null $length: maximum number of data bytes to read. Either a non-negative int or null (infinite length)
+	 * @param int|null $length maximum number of data bytes to read. Either a non-negative int or null (infinite length)
+	 * @param mixed $hasTimedout Reference. Set to true if we timed out waiting for $length data, false otherwise.
 	 *
 	 * @return string the raw data read as a string
 	 * @throws \InvalidArgumentException if $length is neither null nor int
