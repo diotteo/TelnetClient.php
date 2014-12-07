@@ -364,6 +364,9 @@ class TelnetClient {
 	 *
 	 * @return string the raw data read as a string
 	 */
+	/* FIXME: Refactor such that it is possible to also just get all received data
+	 * while still processing said data in the state machine
+	 */
 	private function waitForData($length = NULL, &$hasTimedout) {
 
 		if (is_null($length) && is_null($this->socket_timeout)) {
@@ -530,6 +533,11 @@ class TelnetClient {
 		/*
 		 * FIXME: This is dubious: why not rely on DO ECHO?
 		 * (Admittedly the original code WONT/DONT all options and my test servers don't respect DONT ECHO)
+		 */
+		//FIXME: Allow toggling this
+		//FIXME: This also gets a pass at the <CR> <LF> filtering, which is bad
+		/* FIXME: This also doesn't respect the order of things:
+		 * since we return as soon as the prompt is found (regardless of whether or not more characters have been received or not), appending to the global buffer means those characters get written after (while they were received before)
 		 */
 		$this->global_buffer .= $buffer;
 		$ret = fwrite($this->socket, $buffer);
