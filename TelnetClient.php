@@ -251,16 +251,29 @@ class TelnetClient {
 	 * @param string $host Host name or IP addres
 	 * @param int $port TCP port number
 	 * @param float $connect_timeout the timeout for connecting to the host
-	 * @param float $socket_timeout the timeout to wait for new data
+	 * @param float|null $socket_timeout the timeout to wait for new data (null = infinite)
 	 * @return void
+	 * @throws \InvalidArgumentException if an argument is invalid
 	 */
 	public function __construct($host = '127.0.0.1', $port = 23, $connect_timeout = 1.0, $socket_timeout = 10.0) {
 		$this->host = $host;
+
+		if (!is_int($port)) {
+			throw new \InvalidArgumentException('port must be int');
+		}
 		$this->port = $port;
 
-		$this->state = self::STATE_DEFAULT;
+		if (!(is_float($connect_timeout) && $connect_timeout >= 0.0)) {
+			throw new \InvalidArgumentException('connect_timeout must be float');
+		}
 		$this->connect_timeout = $connect_timeout;
+		if (!is_null($socket_timeout)
+				&& !(is_float($socket_timeout) && $socket_timeout >= 0.0)) {
+			throw new \InvalidArgumentException('socket_timeout must be non-negative float or null');
+		}
 		$this->socket_timeout = $socket_timeout;
+
+		$this->state = self::STATE_DEFAULT;
 	}
 
 
