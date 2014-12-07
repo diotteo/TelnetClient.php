@@ -27,7 +27,7 @@ class TelnetClient {
 
 	private $socket = NULL;
 	private $buffer = NULL;
-	private $prompt;
+	private $regex_prompt;
 	private $errno;
 	private $errstr;
 	private $strip_prompt = TRUE;
@@ -289,7 +289,7 @@ class TelnetClient {
 	 * @return boolean
 	 */
 	public function login($username, $password, $login_prompt = 'login:', $password_prompt = 'Password:') {
-		$prompt = $this->prompt;
+		$prompt = $this->regex_prompt;
 		try {
 			$this->setPrompt($login_prompt);
 			$this->waitPrompt();
@@ -299,7 +299,7 @@ class TelnetClient {
 			$this->write($password);
 
 			//Reset prompt
-			$this->prompt = $prompt;
+			$this->regex_prompt = $prompt;
 
 			$this->waitPrompt();
 		} catch (Exception $e) {
@@ -328,7 +328,7 @@ class TelnetClient {
 	 * @return boolean
 	 */
 	public function setRegexPrompt($str = '\$') {
-		$this->prompt = $str;
+		$this->regex_prompt = $str;
 		return self::TELNET_OK;
 	}
 
@@ -557,7 +557,7 @@ class TelnetClient {
 	 */
 	protected function waitPrompt() {
 		if (self::$DEBUG) {
-			print("\nWaiting for prompt \"{$this->regexPrompt}\"\n");
+			print("\nWaiting for prompt \"{$this->regex_prompt}\"\n");
 		}
 
 		$this->clearBuffer();
@@ -569,6 +569,6 @@ class TelnetClient {
 			if ($hasTimedout) {
 				throw new ErrorException("Connection timed out");
 			}
-		} while (preg_match("/{$this->regexPrompt}$/", $this->buffer) == 0);
+		} while (preg_match("/{$this->regex_prompt}$/", $this->buffer) == 0);
 	}
 }
