@@ -97,11 +97,11 @@ class TelnetClient {
 	const STATE_DEFAULT = 0;
 	const STATE_CMD = 1;
 
-	const TELNET_ERROR = FALSE;
-	const TELNET_OK = TRUE;
+	const TELNET_ERROR = false;
+	const TELNET_OK = true;
 
 
-	private static $DEBUG = FALSE;
+	private static $DEBUG = false;
 
 	private static $NVTP_SPECIALS = array(
 			self::NVT_NUL  => 'NUL',
@@ -158,8 +158,8 @@ class TelnetClient {
 	private $connect_timeout; //Timeout to connect to remote
 	private $socket_timeout; //Timeout to wait for data
 
-	private $socket = NULL;
-	private $buffer = NULL;
+	private $socket = null;
+	private $buffer = null;
 	private $regex_prompt;
 	private $errno;
 	private $errstr;
@@ -272,28 +272,28 @@ class TelnetClient {
 	public function __destruct() {
 		// clean up resources
 		$this->disconnect();
-		$this->buffer = NULL;
-		$this->global_buffer = NULL;
+		$this->buffer = null;
+		$this->global_buffer = null;
 	}
 
 
 	/**
 	 * Attempts connection to remote host.
 	 *
-	 * @return boolean TRUE if successful
+	 * @return boolean true if successful
 	 * @throws NameResolutionException on error
 	 * @throws ConnectionException on error
 	 */
 	public function connect() {
 		$this->ip_address = gethostbyname($this->host);
 
-		if (filter_var($this->ip_address, FILTER_VALIDATE_IP) === FALSE) {
+		if (filter_var($this->ip_address, FILTER_VALIDATE_IP) === false) {
 			throw new NameResolutionException("Cannot resolve $this->host");
 		}
 
 		// attempt connection - suppress warnings
 		$this->socket = @fsockopen($this->ip_address, $this->port, $this->errno, $this->errstr, $this->connect_timeout);
-		if ($this->socket === FALSE) {
+		if ($this->socket === false) {
 			throw new ConnectionException("Cannot connect to $this->host on port $this->port");
 		}
 		stream_set_blocking($this->socket, 0);
@@ -310,10 +310,10 @@ class TelnetClient {
 	 */
 	public function disconnect() {
 		if (is_resource($this->socket)) {
-			if (fclose($this->socket) === FALSE) {
+			if (fclose($this->socket) === false) {
 				throw new UnlikelyException("Error while closing telnet socket");
 			}
-			$this->socket = NULL;
+			$this->socket = null;
 		}
 		return self::TELNET_OK;
 	}
@@ -324,10 +324,10 @@ class TelnetClient {
 	 * This method is a wrapper for lower level private methods
 	 *
 	 * @param string $command Command to execute
-	 * @param boolean $add_newline Default TRUE, adds newline to the command
+	 * @param boolean $add_newline Default true, adds newline to the command
 	 * @return string Command result
 	 */
-	public function exec($command, $add_newline = TRUE) {
+	public function exec($command, $add_newline = true) {
 		$this->write($command, $add_newline);
 		$this->waitPrompt();
 		return $this->buffer;
@@ -372,7 +372,7 @@ class TelnetClient {
 	 * This should be set to the last character of the command line prompt
 	 *
 	 * @param string $str String to respond to
-	 * @return boolean TRUE on success
+	 * @return boolean true on success
 	 */
 	public function setPrompt($str = '$') {
 		return $this->setRegexPrompt(preg_quote($str, '/'));
@@ -384,7 +384,7 @@ class TelnetClient {
 	 * This should be set to the last line of the command line prompt.
 	 *
 	 * @param string $str Regex string to respond to
-	 * @return boolean TRUE on success
+	 * @return boolean true on success
 	 */
 	public function setRegexPrompt($str = '\$') {
 		$this->regex_prompt = $str;
@@ -411,7 +411,7 @@ class TelnetClient {
 	/**
 	 * Reads up to $length bytes of data (TELNET commands are not counted) or wait for $this->socket_timeout seconds, whichever occurs first
 	 *
-	 * @param int|null $length: maximum number of data bytes to read. Either a non-negative int or NULL (infinite length)
+	 * @param int|null $length: maximum number of data bytes to read. Either a non-negative int or null (infinite length)
 	 *
 	 * @return string the raw data read as a string
 	 * @throws InvalidArgumentException if $length is neither null nor int
@@ -421,7 +421,7 @@ class TelnetClient {
 	/* FIXME: Refactor such that it is possible to also just get all received data
 	 * while still processing said data in the state machine
 	 */
-	private function waitForData($length = NULL, &$hasTimedout) {
+	private function waitForData($length = null, &$hasTimedout) {
 
 		if (is_null($length) && is_null($this->socket_timeout)) {
 			throw new InvalidArgumentException('Would wait infinitely');
@@ -430,17 +430,17 @@ class TelnetClient {
 		}
 
 		$data = '';
-		$endTs = microtime(TRUE) + $this->socket_timeout;
+		$endTs = microtime(true) + $this->socket_timeout;
 		$a_c = array();
-		while ((is_null($this->socket_timeout) || microtime(TRUE) < $endTs)
+		while ((is_null($this->socket_timeout) || microtime(true) < $endTs)
 				&& (is_null($length) || strlen($data) < $length)) {
 			$c = $this->asyncGetc();
-			if ($c === FALSE) {
+			if ($c === false) {
 				usleep(5);
 				continue;
 			} else {
 				//Reset the timeout
-				$endTs = microtime(TRUE) + $this->socket_timeout;
+				$endTs = microtime(true) + $this->socket_timeout;
 			}
 			$a_c[] = $c;
 
@@ -463,14 +463,14 @@ class TelnetClient {
 
 	/**
 	 * This function processes the stream received (passed as an array of NVT characters) and filters TELNET protocol data out.
-	 * It is meant to be called once each time a new character is added to the array. The array can only be said to contain data once the return code is FALSE
+	 * It is meant to be called once each time a new character is added to the array. The array can only be said to contain data once the return code is false
 	 *
 	 * @param array $a_c array of characters to process.
-	 * @return boolean TRUE if more characters are needed, FALSE if processing is done ($a_c was cleaned of TELNET protocol data such that it contains only actual data)
+	 * @return boolean true if more characters are needed, false if processing is done ($a_c was cleaned of TELNET protocol data such that it contains only actual data)
 	 * @throws UnimplementedException on unknown state
 	 */
 	private function processStateMachine(&$a_c) {
-		$isGetMoreData = FALSE;
+		$isGetMoreData = false;
 
 		switch ($this->state) {
 		case self::STATE_DEFAULT:
@@ -500,15 +500,15 @@ class TelnetClient {
 	 * Processes the default state, should only be called from processStateMachine()
 	 *
 	 * @param array $a_c array of characters to process.
-	 * @return boolean TRUE if more characters are needed, FALSE if processing is done ($a_c was cleaned of TELNET protocol data such that it contains only actual data)
+	 * @return boolean true if more characters are needed, false if processing is done ($a_c was cleaned of TELNET protocol data such that it contains only actual data)
 	 */
 	private function processStateMachineDefaultState(&$a_c) {
-		$isGetMoreData = FALSE;
+		$isGetMoreData = false;
 
 		switch ($a_c[0]) {
 		case self::CMD_IAC:
 			if (count($a_c) < 2) {
-				$isGetMoreData = TRUE;
+				$isGetMoreData = true;
 				break;
 			}
 			$cmd = $a_c[1];
@@ -517,11 +517,11 @@ class TelnetClient {
 				 * "With the current set-up, only the IAC need be doubled to be sent as data" --RFC854) */
 
 				//Add (only) one IAC character to the data
-				$isGetMoreData = FALSE;
+				$isGetMoreData = false;
 				$a_c = array(self::CMD_IAC);
 
 			} else {
-				$isGetMoreData = TRUE;
+				$isGetMoreData = true;
 				$this->state = self::STATE_CMD;
 			}
 			break;
@@ -550,14 +550,14 @@ class TelnetClient {
 	 * Processes the command state, should only be called from processStateMachine()
 	 *
 	 * @param array $a_c array of characters to process.
-	 * @return boolean TRUE if more characters are needed, FALSE if processing is done ($a_c was cleaned of TELNET protocol data such that it contains only actual data)
+	 * @return boolean true if more characters are needed, false if processing is done ($a_c was cleaned of TELNET protocol data such that it contains only actual data)
 	 */
 	private function processStateMachineCmdState(&$a_c) {
-		$isGetMoreData = FALSE;
+		$isGetMoreData = false;
 
 		if (count($a_c) < 3) {
 			//Get more data
-			$isGetMoreData = TRUE;
+			$isGetMoreData = true;
 
 		} else if ($a_c[0] !== self::CMD_IAC) {
 			//Pass;
@@ -565,14 +565,14 @@ class TelnetClient {
 		} else {
 			$cmd = $a_c[1];
 			$opt = $a_c[2];
-			$replyCmd = NULL;
+			$replyCmd = null;
 			switch ($cmd) {
 			case self::CMD_SB:
 				if ($opt === self::CMD_SE) {
 					//Empty subnegotiation?! (pass)
 				} else if (end($a_c) !== self::CMD_SE) {
 					//Get more data
-					$isGetMoreData = TRUE;
+					$isGetMoreData = true;
 				} else {
 					//TODO: Handle subnegotiation here
 					if (self::$DEBUG) {
@@ -625,11 +625,11 @@ class TelnetClient {
 	 * Write command to a socket
 	 *
 	 * @param string $buffer Stuff to write to socket
-	 * @param boolean $add_newline Default TRUE, adds newline to the command
-	 * @return boolean TRUE on success
+	 * @param boolean $add_newline Default true, adds newline to the command
+	 * @return boolean true on success
 	 * @throws ConnectionException if connection on socket errors
 	 */
-	protected function write($buffer, $add_newline = TRUE) {
+	protected function write($buffer, $add_newline = true) {
 		if (!is_resource($this->socket)) {
 			throw new ConnectionException("Telnet connection closed");
 		}
@@ -652,7 +652,7 @@ class TelnetClient {
 		 */
 		$this->global_buffer .= $buffer;
 		$ret = fwrite($this->socket, $buffer);
-		if ($ret !== strlen($buffer)) { //|| $ret === FALSE) {
+		if ($ret !== strlen($buffer)) { //|| $ret === false) {
 			throw new ConnectionException("Error writing to socket");
 		}
 
