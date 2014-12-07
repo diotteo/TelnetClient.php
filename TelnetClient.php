@@ -197,13 +197,13 @@ class TelnetClient {
 	 * @param int $port TCP port number
 	 * @return void
 	 */
-	public function __construct($host = '127.0.0.1', $port = 23) {
+	public function __construct($host = '127.0.0.1', $port = 23, $connect_timeout = 1.0, $socket_timeout = 10.0) {
 		$this->host = $host;
 		$this->port = $port;
 
 		$this->state = self::STATE_NORMAL;
-		$this->connect_timeout = 1.0;
-		$this->socket_timeout = 10.0;
+		$this->connect_timeout = $connect_timeout;
+		$this->socket_timeout = $socket_timeout;
 	}
 
 
