@@ -427,9 +427,9 @@ class TelnetClient {
 	 * @param int|null $length: maximum number of data bytes to read. Either a non-negative int or null (infinite length)
 	 *
 	 * @return string the raw data read as a string
-	 * @throws InvalidArgumentException if $length is neither null nor int
-	 * @throws InvalidArgumentException if $length is int and smaller than 1
-	 * @throws InvalidArgumentException if $length is null and socket_timeout is null
+	 * @throws \InvalidArgumentException if $length is neither null nor int
+	 * @throws \InvalidArgumentException if $length is int and smaller than 1
+	 * @throws \InvalidArgumentException if $length is null and socket_timeout is null
 	 */
 	/* FIXME: Refactor such that it is possible to also just get all received data
 	 * while still processing said data in the state machine
@@ -437,9 +437,9 @@ class TelnetClient {
 	private function waitForData($length = null, &$hasTimedout) {
 
 		if (is_null($length) && is_null($this->socket_timeout)) {
-			throw new InvalidArgumentException('Would wait infinitely');
+			throw new \InvalidArgumentException('Would wait infinitely');
 		} else if (!is_null($length) && (!is_int($length) || $length < 1)) {
-			throw new InvalidArgumentException('$length must be a positive int');
+			throw new \InvalidArgumentException('$length must be a positive int');
 		}
 
 		$data = '';
