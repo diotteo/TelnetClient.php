@@ -345,9 +345,6 @@ class TelnetClient {
 
 	private function asyncGetc() {
 		$c = fgetc($this->socket);
-		if ($c !== FALSE) {
-			$this->global_buffer .= $c;
-		}
 		return $c;
 	}
 
