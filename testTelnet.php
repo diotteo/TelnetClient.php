@@ -10,6 +10,8 @@ $password = null;
 $verbosity = 0;
 $debug = 0;
 $cmdList = array('ls /');
+$loginPrompt = 'login:';
+$passPrompt = 'Password:';
 
 
 function getOptLvl($val) {
@@ -23,8 +25,49 @@ function getOptLvl($val) {
 }
 
 
-function parseArguments() {
+function printUsage() {
 	global $argv;
+	global $loginPrompt;
+	global $passPrompt;
+
+	print(<<<EOT
+Usage: {$argv[0]} {options}
+
+Options:
+  -h
+  --help: print this help
+  
+  -d
+  --debug: enable debugging mode
+  
+  -v
+  --verbosity: increase verbosity (currently unused)
+  
+  -H <hostname>
+  --host <hostname>: connect to <hostname>
+  
+  -P <port>
+  --port <port>: connect to <port>
+  
+  -u <user>
+  --user <user>: Login with username <user>
+  
+  -p <pass>
+  --pass <pass>: Login with password <pass>
+  
+  -c <cmd>
+  --cmd <cmd>: Execute <cmd> (may be specified multiple times)
+  
+  --login-prompt <login-prompt>: look for <login-prompt> instead of {$loginPrompt}
+  --password-prompt <pass-prompt>: look for <pass-prompt> instead of {$passPrompt}
+
+EOT
+);
+	exit(1);
+}
+
+
+function parseArguments() {
 	global $port;
 	global $host;
 	global $username;
@@ -32,15 +75,32 @@ function parseArguments() {
 	global $verbosity;
 	global $debug;
 	global $cmdList;
+	global $loginPrompt;
+	global $passPrompt;
 
-	$opts = getopt('dhc:H:P:u:p:v', array('debug', 'help', 'cmd:', 'host:', 'port:', 'user', 'pass'));
+	$opts = getopt('dhc:H:P:u:p:v',
+			array(
+				'debug',
+				'help',
+				'verbosity',
+				'cmd:',
+				'host:',
+				'port:',
+				'user',
+				'pass',
+				'login-prompt',
+				'pass-prompt'
+			));
 
 	foreach ($opts as $opt => $optval) {
 		switch ($opt) {
 		case 'help':
 		case 'h':
-			print("Usage: {$argv[0]} {options}\n");
-			exit(1);
+			printUsage();
+			break;
+		case 'verbosity':
+		case 'v':
+			$verbosity = getOptLvl($optval);
 			break;
 		case 'debug':
 		case 'd':
@@ -73,13 +133,21 @@ function parseArguments() {
 		case 'p':
 			$password = $optval;
 			break;
-		case 'v':
-			$verbosity = getOptLvl($optval);
+		case 'login-prompt':
+			$loginPrompt = $optval;
+			break;
+		case 'pass-prompt':
+			$passPrompt = $optval;
 			break;
 		default:
 			print("Unknown option \"{$opt}\"\n");
 			exit(1);
 		}
+	}
+
+	if (is_null($username) || is_null($password)) {
+		print("Error, username or password is null\n");
+		printUsage();
 	}
 }
 
@@ -100,7 +168,7 @@ $out = '';
 $telnet = new TelnetClient($host, $port);
 $telnet->connect();
 $telnet->setPrompt('$');
-$telnet->login($username, $password);
+$telnet->login($username, $password, $loginPrompt, $passPrompt);
 foreach ($cmdList as $cmd) {
 	print("\n***Executing cmd \"{$cmd}\"***\n");
 	$out = $telnet->exec($cmd);
