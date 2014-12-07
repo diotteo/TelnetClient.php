@@ -5,8 +5,6 @@
  * Used to execute remote commands via telnet connection
  * Uses sockets functions and fgetc() to process result
  *
- * All methods throw Exceptions on error
- *
  * Written by Dalibor Andzakovic <dali@swerve.co.nz>
  * Based on the code originally written by Marc Ennaji and extended by
  * Matthias Blaser <mb@adfinis.ch>
@@ -151,6 +149,8 @@ class TelnetClient {
 
 
 	/**
+	 * Toggle debugging for code defined in this class only
+	 *
 	 * Ideally, this would work if subclasses
 	 * defined only their own static $DEBUG field, but the parent
 	 * class doesn't have access to children's private fields (unsurprisingly)
@@ -164,6 +164,14 @@ class TelnetClient {
 	}
 
 
+	/**
+	 * Translates codes to user-readable strings.
+	 *
+	 * @param string $code the code to translate
+	 * @param string[] $CODE_LIST an array of $code => string
+	 *
+	 * @return string A user-readable string ("0x<hexstring>" is returned for unknown keys)
+	 */
 	private static function getCodeStrOrHexStr($code, $CODE_LIST) {
 		if (array_key_exists($code, $CODE_LIST)) {
 			return $CODE_LIST[$code];
@@ -173,16 +181,42 @@ class TelnetClient {
 	}
 
 
+	/**
+	 * Get a user-readable string for NVT special characters
+	 *
+	 * Example: getNvtPrintSpecialStr(TelnetClient::NVT_NUL) prints "NUL"
+	 *
+	 * @param string the code to translate
+	 * @return string a printable representation of the code ("0x<hexstring> is returned for unknown codes)
+	 */
 	public static function getNvtPrintSpecialStr($code) {
 		return self::getCodeStrOrHexStr($code, self::$NVTP_SPECIALS);
 	}
 
 
+	/**
+	 * Get a user-readable string for TELNET command characters
+	 *
+	 * Example: getNvtPrintSpecialStr(TelnetClient::CMD_IAC)
+	 * Note: The user-readable strings are not guaranteed to be stable
+	 *
+	 * @param string the code to translate
+	 * @return string a printable representation of the code ("0x<hexstring> is returned for unknown codes)
+	 */
 	public static function getCmdStr($code) {
 		return self::getCodeStrOrHexStr($code, self::$CMDS);
 	}
 
 
+	/**
+	 * Get a user-readable string for TELNET option characters
+	 *
+	 * Example: getNvtPrintSpecialStr(TelnetClient::OPT_ECHO)
+	 * Note: The user-readable strings are not guaranteed to be stable
+	 *
+	 * @param string the code to translate
+	 * @return string a printable representation of the code ("0x<hexstring> is returned for unknown codes)
+	 */
 	public static function getOptStr($code) {
 		return self::getCodeStrOrHexStr($code, self::$OPTS);
 	}
@@ -194,6 +228,8 @@ class TelnetClient {
 	 *
 	 * @param string $host Host name or IP addres
 	 * @param int $port TCP port number
+	 * @param float $connect_timeout the timeout for connecting to the host
+	 * @param float $socket_timeout the timeout to wait for new data
 	 * @return void
 	 */
 	public function __construct($host = '127.0.0.1', $port = 23, $connect_timeout = 1.0, $socket_timeout = 10.0) {
@@ -222,7 +258,8 @@ class TelnetClient {
 	/**
 	 * Attempts connection to remote host.
 	 *
-	 * @return boolean Returns TRUE if successful
+	 * @return boolean TRUE if successful
+	 * @throws ErrorException on error
 	 */
 	public function connect() {
 		$this->ip_address = gethostbyname($this->host);
@@ -246,11 +283,12 @@ class TelnetClient {
 	 * Closes IP socket
 	 *
 	 * @return boolean
+	 * @throws ErrorException on error
 	 */
 	public function disconnect() {
 		if (is_resource($this->socket)) {
 			if (fclose($this->socket) === FALSE) {
-				throw new Exception("Error while closing telnet socket");
+				throw new ErrorException("Error while closing telnet socket");
 			}
 			$this->socket = NULL;
 		}
@@ -282,6 +320,7 @@ class TelnetClient {
 	 * @param string $username Username
 	 * @param string $password Password
 	 * @return boolean
+	 * @throws Exception on error
 	 */
 	public function login($username, $password, $login_prompt = 'login:', $password_prompt = 'Password:') {
 		$prompt = $this->regex_prompt;
@@ -310,7 +349,7 @@ class TelnetClient {
 	 * This should be set to the last character of the command line prompt
 	 *
 	 * @param string $str String to respond to
-	 * @return boolean
+	 * @return boolean TRUE on success
 	 */
 	public function setPrompt($str = '$') {
 		return $this->setRegexPrompt(preg_quote($str, '/'));
@@ -322,7 +361,7 @@ class TelnetClient {
 	 * This should be set to the last line of the command line prompt.
 	 *
 	 * @param string $str Regex string to respond to
-	 * @return boolean
+	 * @return boolean TRUE on success
 	 */
 	public function setRegexPrompt($str = '\$') {
 		$this->regex_prompt = $str;
@@ -349,9 +388,10 @@ class TelnetClient {
 	/**
 	 * Reads up to $length bytes of data (TELNET commands are not counted) or wait for $this->socket_timeout seconds, whichever occurs first
 	 *
-	 * @param mixed $length: maximum number of data bytes to read. Either a non-negative int or NULL (infinite length)
+	 * @param int|null $length: maximum number of data bytes to read. Either a non-negative int or NULL (infinite length)
 	 *
 	 * @return string the raw data read as a string
+	 * @throws InvalidArgumentException if $length is of the wrong type or value
 	 */
 	/* FIXME: Refactor such that it is possible to also just get all received data
 	 * while still processing said data in the state machine
@@ -396,6 +436,13 @@ class TelnetClient {
 	}
 
 
+	/**
+	 * This function processes the stream received (passed as an array of NVT characters) and filters TELNET protocol data out.
+	 * It is meant to be called once each time a new character is added to the array. The array can only be said to contain data once the return code is FALSE
+	 *
+	 * @param array $a_c array of characters to process.
+	 * @return boolean TRUE if more characters are needed, FALSE if processing is done ($a_c was cleaned of TELNET protocol data such that it contains only actual data)
+	 */
 	private function processStateMachine(&$a_c) {
 		$isGetMoreData = FALSE;
 
@@ -423,6 +470,12 @@ class TelnetClient {
 	}
 
 
+	/**
+	 * Processes the default state, should only be called from processStateMachine()
+	 *
+	 * @param array $a_c array of characters to process.
+	 * @return boolean TRUE if more characters are needed, FALSE if processing is done ($a_c was cleaned of TELNET protocol data such that it contains only actual data)
+	 */
 	private function processStateMachineDefaultState(&$a_c) {
 		$isGetMoreData = FALSE;
 
@@ -466,6 +519,12 @@ class TelnetClient {
 	}
 
 
+	/**
+	 * Processes the command state, should only be called from processStateMachine()
+	 *
+	 * @param array $a_c array of characters to process.
+	 * @return boolean TRUE if more characters are needed, FALSE if processing is done ($a_c was cleaned of TELNET protocol data such that it contains only actual data)
+	 */
 	private function processStateMachineCmdState(&$a_c) {
 		$isGetMoreData = FALSE;
 
@@ -536,7 +595,7 @@ class TelnetClient {
 	 *
 	 * @param string $buffer Stuff to write to socket
 	 * @param boolean $add_newline Default TRUE, adds newline to the command
-	 * @return boolean
+	 * @return boolean TRUE on success
 	 */
 	protected function write($buffer, $add_newline = TRUE) {
 		if (!is_resource($this->socket)) {
@@ -581,6 +640,8 @@ class TelnetClient {
 
 	/**
 	 * Reads socket until prompt is encountered
+	 *
+	 * @return void
 	 */
 	protected function waitPrompt() {
 		if (self::$DEBUG) {
