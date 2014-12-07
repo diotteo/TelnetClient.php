@@ -251,7 +251,6 @@ class TelnetClient {
 	 * @param float $connect_timeout the timeout for connecting to the host
 	 * @param string $prompt the default prompt
 	 * @param float|null $socket_timeout the timeout to wait for new data (null = infinite)
-	 * @return void
 	 * @throws \InvalidArgumentException if an argument is invalid
 	 */
 	public function __construct($host = '127.0.0.1', $port = 23, $connect_timeout = 1.0, $prompt = '$', $socket_timeout = 10.0) {
