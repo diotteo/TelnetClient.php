@@ -527,7 +527,7 @@ class TelnetClient {
 		$this->clearBuffer();
 
 		if ($add_newline) {
-			$buffer .= self::NVT_CR . self::NVT_LF;;
+			$buffer .= self::NVT_CR . self::NVT_LF;
 		}
 
 		$this->global_buffer .= $buffer;
