@@ -14,6 +14,28 @@
  *
  * Rewritten by Olivier Diotte <olivier+github@diotte.ca>
  */
+
+namespace TelnetClient;
+
+class UnimplementedException extends \ErrorException {
+}
+
+class NameResolutionException extends \InvalidArgumentException {
+}
+
+class ConnectionException extends \RuntimeException {
+}
+
+class ConnectionTimeoutException extends ConnectionException {
+}
+
+class LoginException extends \RuntimeException {
+}
+
+class UnlikelyException extends \ErrorException {
+}
+
+
 class TelnetClient {
 	/* NVT special characters
 	 * specified in the same order as in RFC854
@@ -259,19 +281,20 @@ class TelnetClient {
 	 * Attempts connection to remote host.
 	 *
 	 * @return boolean TRUE if successful
-	 * @throws ErrorException on error
+	 * @throws NameResolutionException on error
+	 * @throws ConnectionException on error
 	 */
 	public function connect() {
 		$this->ip_address = gethostbyname($this->host);
 
 		if (filter_var($this->ip_address, FILTER_VALIDATE_IP) === FALSE) {
-			throw new ErrorException("Cannot resolve $this->host");
+			throw new NameResolutionException("Cannot resolve $this->host");
 		}
 
 		// attempt connection - suppress warnings
 		$this->socket = @fsockopen($this->ip_address, $this->port, $this->errno, $this->errstr, $this->connect_timeout);
 		if ($this->socket === FALSE) {
-			throw new ErrorException("Cannot connect to $this->host on port $this->port");
+			throw new ConnectionException("Cannot connect to $this->host on port $this->port");
 		}
 		stream_set_blocking($this->socket, 0);
 
@@ -283,12 +306,12 @@ class TelnetClient {
 	 * Closes IP socket
 	 *
 	 * @return boolean
-	 * @throws ErrorException on error
+	 * @throws UnlikelyException if closing the socket failed
 	 */
 	public function disconnect() {
 		if (is_resource($this->socket)) {
 			if (fclose($this->socket) === FALSE) {
-				throw new ErrorException("Error while closing telnet socket");
+				throw new UnlikelyException("Error while closing telnet socket");
 			}
 			$this->socket = NULL;
 		}
@@ -320,7 +343,7 @@ class TelnetClient {
 	 * @param string $username Username
 	 * @param string $password Password
 	 * @return boolean
-	 * @throws Exception on error
+	 * @throws LoginException on error
 	 */
 	public function login($username, $password, $login_prompt = 'login:', $password_prompt = 'Password:') {
 		$prompt = $this->regex_prompt;
@@ -337,7 +360,7 @@ class TelnetClient {
 
 			$this->waitPrompt();
 		} catch (Exception $e) {
-			throw new Exception("Login failed", 0, $e);
+			throw new LoginException("Login failed", 0, $e);
 		}
 
 		return self::TELNET_OK;
@@ -391,7 +414,9 @@ class TelnetClient {
 	 * @param int|null $length: maximum number of data bytes to read. Either a non-negative int or NULL (infinite length)
 	 *
 	 * @return string the raw data read as a string
-	 * @throws InvalidArgumentException if $length is of the wrong type or value
+	 * @throws InvalidArgumentException if $length is neither null nor int
+	 * @throws InvalidArgumentException if $length is int and smaller than 1
+	 * @throws InvalidArgumentException if $length is null and socket_timeout is null
 	 */
 	/* FIXME: Refactor such that it is possible to also just get all received data
 	 * while still processing said data in the state machine
@@ -399,7 +424,7 @@ class TelnetClient {
 	private function waitForData($length = NULL, &$hasTimedout) {
 
 		if (is_null($length) && is_null($this->socket_timeout)) {
-			throw new ErrorException('Would wait infinitely');
+			throw new InvalidArgumentException('Would wait infinitely');
 		} else if (!is_null($length) && (!is_int($length) || $length < 1)) {
 			throw new InvalidArgumentException('$length must be a positive int');
 		}
@@ -442,6 +467,7 @@ class TelnetClient {
 	 *
 	 * @param array $a_c array of characters to process.
 	 * @return boolean TRUE if more characters are needed, FALSE if processing is done ($a_c was cleaned of TELNET protocol data such that it contains only actual data)
+	 * @throws UnimplementedException on unknown state
 	 */
 	private function processStateMachine(&$a_c) {
 		$isGetMoreData = FALSE;
@@ -462,7 +488,7 @@ class TelnetClient {
 		//case self::STATE_NEG_YES:
 		//	break;
 		default:
-			throw new ErrorException("Unimplement state {$this->state}");
+			throw new UnimplementedException("Unimplement state {$this->state}");
 			break;
 		}
 
@@ -596,10 +622,11 @@ class TelnetClient {
 	 * @param string $buffer Stuff to write to socket
 	 * @param boolean $add_newline Default TRUE, adds newline to the command
 	 * @return boolean TRUE on success
+	 * @throws ConnectionException if connection on socket errors
 	 */
 	protected function write($buffer, $add_newline = TRUE) {
 		if (!is_resource($this->socket)) {
-			throw new Exception("Telnet connection closed");
+			throw new ConnectionException("Telnet connection closed");
 		}
 
 		// clear buffer from last command
@@ -621,7 +648,7 @@ class TelnetClient {
 		$this->global_buffer .= $buffer;
 		$ret = fwrite($this->socket, $buffer);
 		if ($ret !== strlen($buffer)) { //|| $ret === FALSE) {
-			throw new Exception("Error writing to socket");
+			throw new ConnectionException("Error writing to socket");
 		}
 
 		return self::TELNET_OK;
@@ -642,6 +669,7 @@ class TelnetClient {
 	 * Reads socket until prompt is encountered
 	 *
 	 * @return void
+	 * @throws ConnectionTimeoutException on time out
 	 */
 	protected function waitPrompt() {
 		if (self::$DEBUG) {
@@ -655,7 +683,7 @@ class TelnetClient {
 			$this->global_buffer .= $data;
 
 			if ($hasTimedout) {
-				throw new ErrorException("Connection timed out");
+				throw new ConnectionTimeoutException("Connection timed out");
 			}
 		} while (preg_match("/{$this->regex_prompt}$/", $this->buffer) == 0);
 	}
