@@ -525,6 +525,7 @@ class TelnetClient {
 			}
 
 			if (!is_null($replyCmd)) {
+				//FIXME: Check for failures
 				fwrite($this->socket, self::CMD_IAC . $replyCmd . $opt);
 
 				if (self::$DEBUG) {
@@ -535,6 +536,7 @@ class TelnetClient {
 			}
 			if (!$isGetMoreData) {
 				$a_c = array();
+				//FIXME: Do we always return to the default state? Or is it possible to negotiate in binary mode for example?
 				$this->state = self::STATE_DEFAULT;
 			}
 		}
