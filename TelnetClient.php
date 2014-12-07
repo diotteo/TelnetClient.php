@@ -253,7 +253,7 @@ class TelnetClient {
 	 * @param float|null $socket_timeout the timeout to wait for new data (null = infinite)
 	 * @throws \InvalidArgumentException if an argument is invalid
 	 */
-	public function __construct($host = '127.0.0.1', $port = 23, $connect_timeout = 1.0, $prompt = '$', $socket_timeout = 10.0) {
+	public function __construct($host = '127.0.0.1', $port = 23, $connect_timeout = 1.0, $socket_timeout = 10.0, $prompt = '$') {
 		$this->host = $host;
 
 		if (!is_int($port)) {
