@@ -222,11 +222,9 @@ class TelnetClient {
 	/**
 	 * Attempts connection to remote host.
 	 *
-	 * @param float $connect_timeout the connection timeout (fsockopen)
 	 * @return boolean Returns TRUE if successful
 	 */
-	public function connect($connect_timeout) {
-		$this->connect_timeout = $connect_timeout;
+	public function connect() {
 		$this->ip_address = gethostbyname($this->host);
 
 		if (filter_var($this->ip_address, FILTER_VALIDATE_IP) === FALSE) {
@@ -234,7 +232,7 @@ class TelnetClient {
 		}
 
 		// attempt connection - suppress warnings
-		$this->socket = @fsockopen($this->host, $this->port, $this->errno, $this->errstr, $this->connect_timeout);
+		$this->socket = @fsockopen($this->ip_address, $this->port, $this->errno, $this->errstr, $this->connect_timeout);
 		if ($this->socket === FALSE) {
 			throw new ErrorException("Cannot connect to $this->host on port $this->port");
 		}
