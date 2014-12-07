@@ -520,7 +520,7 @@ class TelnetClient {
 
 			default:
 				if (self::$DEBUG) {
-					print('Ignoring unknown command character 0x' . bin2hex($cmd) . "\n");
+					print('Ignoring unknown command ' . self::getCmdStr($cmd) . "\n");
 				}
 			}
 
