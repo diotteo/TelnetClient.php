@@ -366,7 +366,7 @@ class TelnetClient {
 	 *
 	 * @return void
 	 */
-	public function clearBuffer() {
+	private function clearBuffer() {
 		$this->buffer = '';
 	}
 
