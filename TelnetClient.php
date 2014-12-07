@@ -483,7 +483,7 @@ class TelnetClient {
 	 * @return boolean true if more characters are needed, false if processing is done ($a_c was cleaned of TELNET protocol data such that it contains only actual data)
 	 * @throws UnimplementedException on unknown state
 	 */
-	private function processStateMachine(&$a_c) {
+	private function processStateMachine(array &$a_c) {
 		$isGetMoreData = false;
 
 		switch ($this->state) {
@@ -516,7 +516,7 @@ class TelnetClient {
 	 * @param array $a_c array of characters to process.
 	 * @return boolean true if more characters are needed, false if processing is done ($a_c was cleaned of TELNET protocol data such that it contains only actual data)
 	 */
-	private function processStateMachineDefaultState(&$a_c) {
+	private function processStateMachineDefaultState(array &$a_c) {
 		$isGetMoreData = false;
 
 		switch ($a_c[0]) {
@@ -567,7 +567,7 @@ class TelnetClient {
 	 * @return boolean true if more characters are needed, false if processing is done ($a_c was cleaned of TELNET protocol data such that it contains only actual data)
 	 * @throws ConnectionException if sending command negotiation fails
 	 */
-	private function processStateMachineCmdState(&$a_c) {
+	private function processStateMachineCmdState(array &$a_c) {
 		$isGetMoreData = false;
 
 		if (count($a_c) < 3) {
