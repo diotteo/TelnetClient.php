@@ -262,10 +262,7 @@ class TelnetClient {
 		}
 		$this->port = $port;
 
-		if (!(is_float($connect_timeout) && $connect_timeout >= 0.0)) {
-			throw new \InvalidArgumentException('connect_timeout must be float');
-		}
-		$this->connect_timeout = $connect_timeout;
+		$this->setConnectTimeout($connect_timeout);
 		$this->setSocketTimeout($socket_timeout);
 		$this->setPrompt($prompt);
 
@@ -356,6 +353,43 @@ class TelnetClient {
 	 */
 	public function getSocketTimeout() {
 		return $this->socket_timeout;
+	}
+
+
+	/**
+	 * @return string the hostname (as passed to the ctor) to connect to
+	 */
+	public function getHostname() {
+		return $this->host;
+	}
+
+
+	/**
+	 * @return string the IP address the hostname was last resolved to
+	 */
+	public function getIpAddress() {
+		return $this->ip_address;
+	}
+
+
+	/**
+	 * @return float the connect timeout (see setConnectTimeout())
+	 */
+	public function getConnectTimeout() {
+		return $this->connectTimeout;
+	}
+
+
+	/**
+	 * @param float $connect_timeout the timeout, in seconds, to wait for the socket connection/TCP handshake
+	 * @return void
+	 * @throws \InvalidArgumentException if $connect_timeout is not float or is negative
+	 */
+	public function setConnectTimeout($connect_timeout) {
+		if (!(is_float($connect_timeout) && $connect_timeout >= 0.0)) {
+			throw new \InvalidArgumentException('connect_timeout must be float');
+		}
+		$this->connect_timeout = $connect_timeout;
 	}
 
 
