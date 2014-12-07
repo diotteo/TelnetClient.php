@@ -466,11 +466,20 @@ class TelnetClient {
 	 * Sets a regex string to respond to.
 	 * This should be set to the last line of the command line prompt.
 	 *
+	 * Note: The actual regex is "/{$str}$/", so you will need to escape slashes
+	 * and must not include a $ metacharacter
+	 *
 	 * @param string $str Regex string to respond to
 	 * @return boolean true on success
+	 * @throws \InvalidArgumentException if the regex doesn't compile
 	 */
 	public function setRegexPrompt($str = '\$') {
 		$this->regex_prompt = $str;
+
+		if (false === preg_match("/{$this->regex_prompt}$/", '')) {
+			throw new \InvalidArgumentException('Malformed PCRE error');
+		}
+
 		return self::TELNET_OK;
 	}
 
