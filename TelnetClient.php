@@ -617,8 +617,11 @@ class TelnetClient {
 			}
 
 			if (!is_null($replyCmd)) {
-				//FIXME: Check for failures
-				fwrite($this->socket, self::CMD_IAC . $replyCmd . $opt);
+				$buffer = self::CMD_IAC . $replyCmd . $opt;
+				$ret = fwrite($this->socket, $buffer);
+				if ($ret !== strlen($buffer)) { //|| $ret === false) {
+					throw new ConnectionException("Error writing to socket");
+				}
 
 				if (self::$DEBUG) {
 					$str = sprintf("[CMD %s]", self::getCmdStr($cmd));
