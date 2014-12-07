@@ -251,8 +251,8 @@ class TelnetClient {
 	 * @return boolean
 	 */
 	public function disconnect() {
-		if ($this->socket) {
-			if (!fclose($this->socket)) {
+		if (is_resource($this->socket)) {
+			if (fclose($this->socket) === FALSE) {
 				throw new Exception("Error while closing telnet socket");
 			}
 			$this->socket = NULL;
@@ -508,7 +508,7 @@ class TelnetClient {
 	 * @return boolean
 	 */
 	protected function write($buffer, $add_newline = TRUE) {
-		if (!$this->socket) {
+		if (!is_resource($this->socket)) {
 			throw new Exception("Telnet connection closed");
 		}
 
