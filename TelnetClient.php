@@ -74,7 +74,7 @@ class TelnetClient {
 	const OPT_NEW_ENV   = "\x27"; //39, New environment variable, RFC1572
 	const OPT_R_FLW_CTR = "\x21"; //33, Remote Flow Control, RFC1080
 
-	const STATE_NORMAL = 0;
+	const STATE_DEFAULT = 0;
 
 	const TELNET_ERROR = FALSE;
 	const TELNET_OK = TRUE;
