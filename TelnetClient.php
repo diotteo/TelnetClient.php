@@ -709,6 +709,6 @@ class TelnetClient {
 			if ($hasTimedout) {
 				throw new ConnectionTimeoutException("Connection timed out");
 			}
-		} while (preg_match("/{$this->regex_prompt}$/", $this->buffer) == 0);
+		} while (preg_match("/{$this->regex_prompt}$/", $this->buffer) === 0);
 	}
 }
