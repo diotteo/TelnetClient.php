@@ -269,7 +269,7 @@ class TelnetClient {
 	public function exec($command, $add_newline = TRUE) {
 		$this->write($command, $add_newline);
 		$this->waitPrompt();
-		return $this->getBuffer();
+		return $this->buffer;
 	}
 
 
