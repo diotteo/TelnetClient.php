@@ -22,3 +22,7 @@ $telnet->disconnect();
 
 print("The contents of / is: \"{$cmdResult}\"\n");
 ```
+
+Alternatively, have a look at testTelnet.php:
+$ ./testTelnet.php -h
+$ ./testTelnet.php -u telnetuser -p weak -H 127.0.0.1 -P 23 -c "ls /"
