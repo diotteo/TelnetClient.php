@@ -13,7 +13,7 @@ Things that I know not to work the same anymore:<br>
 - The subclassing interface is probably broken (I couldn't keep the getBuffer() method without skipping the state machine)
 
 Many things are still wrong (though it was like that in upstream versions too):
-	- we DONT/WONT Suppress Go Ahead, Echo and Linemode but expect them to work, etc.
+- we DONT/WONT Suppress Go Ahead, Echo and Linemode but expect them to work, etc.
 
 Usage example:
 ---
