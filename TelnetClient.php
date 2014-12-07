@@ -132,6 +132,7 @@ class TelnetClient {
 
 
 	private $host;
+	private $ip_address;
 	private $port;
 	private $timeout;
 	private $connect_timeout; //Timeout to connect to remote
@@ -227,22 +228,16 @@ class TelnetClient {
 	 */
 	public function connect($connect_timeout) {
 		$this->connect_timeout = $connect_timeout;
+		$this->ip_address = gethostbyname($this->host);
 
-		// check if we need to convert host to IP
-		if (!preg_match('/([0-9]{1,3}\\.){3,3}[0-9]{1,3}/', $this->host)) {
-			$ip = gethostbyname($this->host);
-
-			if ($this->host == $ip) {
-				throw new Exception("Cannot resolve $this->host");
-			} else {
-				$this->host = $ip;
-			}
+		if (filter_var($this->ip_address, FILTER_VALIDATE_IP) === FALSE) {
+			throw new ErrorException("Cannot resolve $this->host");
 		}
 
 		// attempt connection - suppress warnings
 		$this->socket = @fsockopen($this->host, $this->port, $this->errno, $this->errstr, $this->connect_timeout);
 		if ($this->socket === FALSE) {
-			throw new Exception("Cannot connect to $this->host on port $this->port");
+			throw new ErrorException("Cannot connect to $this->host on port $this->port");
 		}
 		stream_set_blocking($this->socket, 0);
 
