@@ -75,6 +75,7 @@ class TelnetClient {
 	const OPT_R_FLW_CTR = "\x21"; //33, Remote Flow Control, RFC1080
 
 	const STATE_DEFAULT = 0;
+	const STATE_CMD = 1;
 
 	const TELNET_ERROR = FALSE;
 	const TELNET_OK = TRUE;
@@ -457,61 +458,8 @@ class TelnetClient {
 				$isGetMoreData = FALSE;
 				$a_c = array(self::CMD_IAC);
 
-			/* FIXME: Set the state to STATE_CMD and put all this in processStateMachineCmdState()
-			 */
-			} else if (count($a_c) < 3) {
-				//Get more data
-				$isGetMoreData = TRUE;
-
 			} else {
-				$opt = $a_c[2];
-				$replyCmd = NULL;
-				switch ($cmd) {
-				case self::CMD_SB:
-					if ($opt === self::CMD_SE) {
-						//Empty subnegotiation?! (pass)
-					} else if (end($a_c) !== self::CMD_SE) {
-						//Get more data
-						$isGetMoreData = TRUE;
-					} else {
-						//TODO: Handle subnegotiation here
-						if (self::$DEBUG) {
-							print("Silently dropping subnegotiation (to be implemented)\n");
-						}
-					}
-					break;
-
-				//TODO: Handle other commands
-				case self::CMD_DO: //FALLTHROUGH
-				case self::CMD_DONT:
-					$replyCmd = self::CMD_WONT;
-					break;
-
-				case self::CMD_WILL:
-					$replyCmd = self::CMD_DONT;
-					break;
-				case self::CMD_WONT:
-					//Pass, we are not supposed to "acknowledge" WONTs
-					break;
-
-				default:
-					if (self::$DEBUG) {
-						print('Ignoring unknown command character 0x' . bin2hex($cmd) . "\n");
-					}
-				}
-
-				if (!is_null($replyCmd)) {
-					fwrite($this->socket, self::CMD_IAC . $replyCmd . $opt);
-
-					if (self::$DEBUG) {
-						$str = sprintf("[CMD %s]", self::getCmdStr($cmd));
-						$str .= sprintf("[OPT %s]", self::getOptStr($opt));
-						print($str . "\n");
-					}
-				}
-				if (!$isGetMoreData) {
-					$a_c = array();
-				}
+				$this->state = self::STATE_CMD;
 			}
 			break;
 
@@ -529,6 +477,69 @@ class TelnetClient {
 			break;
 		default:
 			//Pass, raw data
+		}
+
+		return $isGetMoreData;
+	}
+
+
+	private function processStateMachineCmdState(&$a_c) {
+		$isGetMoreData = FALSE;
+
+		if (count($a_c) < 3) {
+			//Get more data
+			$isGetMoreData = TRUE;
+
+		} else {
+			$opt = $a_c[2];
+			$replyCmd = NULL;
+			switch ($cmd) {
+			case self::CMD_SB:
+				if ($opt === self::CMD_SE) {
+					//Empty subnegotiation?! (pass)
+				} else if (end($a_c) !== self::CMD_SE) {
+					//Get more data
+					$isGetMoreData = TRUE;
+				} else {
+					//TODO: Handle subnegotiation here
+					if (self::$DEBUG) {
+						print("Silently dropping subnegotiation (to be implemented)\n");
+					}
+				}
+				break;
+
+			//TODO: Handle other commands
+			case self::CMD_DO: //FALLTHROUGH
+			case self::CMD_DONT:
+				$replyCmd = self::CMD_WONT;
+				break;
+
+			case self::CMD_WILL:
+				$replyCmd = self::CMD_DONT;
+				break;
+			case self::CMD_WONT:
+				//Pass, we are not supposed to "acknowledge" WONTs
+				break;
+
+			default:
+				if (self::$DEBUG) {
+					print('Ignoring unknown command character 0x' . bin2hex($cmd) . "\n");
+				}
+			}
+
+			if (!is_null($replyCmd)) {
+				fwrite($this->socket, self::CMD_IAC . $replyCmd . $opt);
+
+				if (self::$DEBUG) {
+					$str = sprintf("[CMD %s]", self::getCmdStr($cmd));
+					$str .= sprintf("[OPT %s]", self::getOptStr($opt));
+					print($str . "\n");
+				}
+			}
+			if (!$isGetMoreData) {
+				$a_c = array();
+				$this->state = self::STATE_DEFAULT;
+			}
 		}
 
 		return $isGetMoreData;
