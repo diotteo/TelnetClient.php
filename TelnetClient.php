@@ -391,109 +391,7 @@ class TelnetClient {
 			}
 			$a_c[] = $c;
 
-			switch ($this->state) {
-			case self::STATE_NORMAL:
-				switch ($a_c[0]) {
-				case self::CMD_IAC:
-					if (count($a_c) < 2) {
-						$isGetMoreData = TRUE;
-						break;
-					}
-					$cmd = $a_c[1];
-					if ($cmd === self::CMD_IAC) {
-						/* Is this supposed to happen in normal mode? (Yes,
-						 * "With the current set-up, only the IAC need be doubled to be sent as data" --RFC854) */
-
-						//Add one IAC character to the data
-						$isGetMoreData = FALSE;
-						$a_c = array(self::CMD_IAC);
-
-					} else if (count($a_c) < 3) {
-						//Get more data
-						$isGetMoreData = TRUE;
-					} else {
-						$opt = $a_c[2];
-						$replyCmd = NULL;
-						switch ($cmd) {
-						case self::CMD_SB:
-							if ($opt === self::CMD_SE) {
-								//Empty subnegotiation?! (pass)
-							} else if (end($a_c) !== self::CMD_SE) {
-								//Get more data
-								$isGetMoreData = TRUE;
-							} else {
-								//TODO: Handle subnegotiation here
-								if (self::$DEBUG) {
-									print("Silently dropping subnegotiation (to be implemented)\n");
-								}
-							}
-							break;
-
-						//TODO: Handle other commands
-						case self::CMD_DO: //FALLTHROUGH
-						case self::CMD_DONT:
-							$replyCmd = self::CMD_WONT;
-							break;
-
-						case self::CMD_WILL:
-							$replyCmd = self::CMD_DONT;
-							break;
-						case self::CMD_WONT:
-							//Pass, we are not supposed to "acknowledge" WONTs
-							break;
-
-						default:
-							if (self::$DEBUG) {
-								print('Ignoring unknown command character 0x' . bin2hex($cmd) . "\n");
-							}
-						}
-
-						if (!is_null($replyCmd)) {
-							fwrite($this->socket, self::CMD_IAC . $replyCmd . $opt);
-
-							if (self::$DEBUG) {
-								$str = sprintf("[CMD %s]", self::getCmdStr($cmd));
-								$str .= sprintf("[OPT %s]", self::getOptStr($opt));
-								print($str . "\n");
-							}
-						}
-						if (!$isGetMoreData) {
-							$a_c = array();
-						}
-					}
-					break;
-
-				//Replace <CR> <LF> by "\n" (only in STATE_NORMAL)
-				case self::NVT_CR:
-					if (count($a_c) < 2) {
-						$isGetMoreData = true;
-					} else {
-						switch ($a_c[1]) {
-						case self::NVT_LF:
-							$a_c = array("\n");
-							break;
-						}
-					}
-					break;
-				default:
-					//Pass, handled below after the switch ()
-				}
-				break;
-			//case self::STATE_BINARY:
-			//	break;
-			//case self::STATE_CMD:
-			//	switch ($c) {
-			//	case self::CMD_IAC:
-			//		$this->state = self::
-			//	}
-			//	break;
-			//case self::STATE_OPT:
-			//	break;
-			//case self::STATE_NEG_NO:
-			//	break;
-			//case self::STATE_NEG_YES:
-			//	break;
-			}
+			$isGetMoreData = $this->processStateMachine($a_c);
 
 			if (!$isGetMoreData && count($a_c) > 0) {
 				$newData = implode($a_c);
@@ -508,6 +406,132 @@ class TelnetClient {
 		}
 
 		return $data;
+	}
+
+
+	private function processStateMachine(&$a_c) {
+		$isGetMoreData = FALSE;
+
+		switch ($this->state) {
+		case self::STATE_DEFAULT:
+			$isGetMoreData = $this->processStateMachineDefaultState($a_c);
+			break;
+		//case self::STATE_BINARY:
+		//	break;
+		//case self::STATE_CMD:
+		//	switch ($c) {
+		//	case self::CMD_IAC:
+		//		$this->state = self::
+		//	}
+		//	break;
+		//case self::STATE_OPT:
+		//	break;
+		//case self::STATE_NEG_NO:
+		//	break;
+		//case self::STATE_NEG_YES:
+		//	break;
+		default:
+			throw new ErrorException("Unimplement state {$this->state}");
+			break;
+		}
+
+		return $isGetMoreData;
+	}
+
+
+	private function processStateMachineDefaultState(&$a_c) {
+		$isGetMoreData = FALSE;
+
+		switch ($a_c[0]) {
+		case self::CMD_IAC:
+			if (count($a_c) < 2) {
+				$isGetMoreData = TRUE;
+				break;
+			}
+			$cmd = $a_c[1];
+			if ($cmd === self::CMD_IAC) {
+				/* Is this supposed to happen in normal mode? (Yes,
+				 * "With the current set-up, only the IAC need be doubled to be sent as data" --RFC854) */
+
+				//Add (only) one IAC character to the data
+				$isGetMoreData = FALSE;
+				$a_c = array(self::CMD_IAC);
+
+			/* FIXME: Set the state to STATE_CMD and put all this in processStateMachineCmdState()
+			 */
+			} else if (count($a_c) < 3) {
+				//Get more data
+				$isGetMoreData = TRUE;
+
+			} else {
+				$opt = $a_c[2];
+				$replyCmd = NULL;
+				switch ($cmd) {
+				case self::CMD_SB:
+					if ($opt === self::CMD_SE) {
+						//Empty subnegotiation?! (pass)
+					} else if (end($a_c) !== self::CMD_SE) {
+						//Get more data
+						$isGetMoreData = TRUE;
+					} else {
+						//TODO: Handle subnegotiation here
+						if (self::$DEBUG) {
+							print("Silently dropping subnegotiation (to be implemented)\n");
+						}
+					}
+					break;
+
+				//TODO: Handle other commands
+				case self::CMD_DO: //FALLTHROUGH
+				case self::CMD_DONT:
+					$replyCmd = self::CMD_WONT;
+					break;
+
+				case self::CMD_WILL:
+					$replyCmd = self::CMD_DONT;
+					break;
+				case self::CMD_WONT:
+					//Pass, we are not supposed to "acknowledge" WONTs
+					break;
+
+				default:
+					if (self::$DEBUG) {
+						print('Ignoring unknown command character 0x' . bin2hex($cmd) . "\n");
+					}
+				}
+
+				if (!is_null($replyCmd)) {
+					fwrite($this->socket, self::CMD_IAC . $replyCmd . $opt);
+
+					if (self::$DEBUG) {
+						$str = sprintf("[CMD %s]", self::getCmdStr($cmd));
+						$str .= sprintf("[OPT %s]", self::getOptStr($opt));
+						print($str . "\n");
+					}
+				}
+				if (!$isGetMoreData) {
+					$a_c = array();
+				}
+			}
+			break;
+
+		case self::NVT_CR:
+			if (count($a_c) < 2) {
+				$isGetMoreData = true;
+			} else {
+				switch ($a_c[1]) {
+				case self::NVT_LF:
+					//Replace <CR> <LF> by "\n" (only in STATE_DEFAULT)
+					$a_c = array("\n");
+					break;
+				}
+			}
+			break;
+		default:
+			//Pass, raw data
+		}
+
+		return $isGetMoreData;
 	}
 
 
