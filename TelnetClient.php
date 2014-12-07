@@ -372,7 +372,8 @@ class TelnetClient {
 
 
 	/**
-	 * @return float the connect timeout (see setConnectTimeout())
+	 * @return float the connect timeout
+	 * @see self::setConnectTimeout()
 	 */
 	public function getConnectTimeout() {
 		return $this->connectTimeout;
@@ -455,7 +456,8 @@ class TelnetClient {
 
 	/**
 	 * @return string the current regex prompt without the enclosing
-	 *   slashes and $ metacharacter (see setRegexPrompt())
+	 *   slashes and $ metacharacter
+	 * @see self::setRegexPrompt()
 	 */
 	public function getRegexPrompt() {
 		return $this->regex_prompt;
