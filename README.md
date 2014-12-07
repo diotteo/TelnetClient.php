@@ -12,8 +12,8 @@ Things that I know not to work the same anymore:<br>
 - Line endings should always be returned to the caller as "\n" but this guarantee is based on the assumption of a correct server implementation (one that encodes line endings as \<CR\> \<LF\> in the default (text) state)
 - The subclassing interface is probably broken (I couldn't keep the getBuffer() method without skipping the state machine)
 
-- Many things are still wrong (though it was like that in upstream versions too):
-	-we DONT/WONT Suppress Go Ahead, Echo and Linemode but expect them to work, etc.
+Many things are still wrong (though it was like that in upstream versions too):
+	- we DONT/WONT Suppress Go Ahead, Echo and Linemode but expect them to work, etc.
 
 Usage example:
 ---
