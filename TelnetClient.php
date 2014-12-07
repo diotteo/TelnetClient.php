@@ -417,13 +417,10 @@ class TelnetClient {
 		case self::STATE_DEFAULT:
 			$isGetMoreData = $this->processStateMachineDefaultState($a_c);
 			break;
+		case self::STATE_CMD:
+			$isGetMoreData = $this->processStateMachineCmdState($a_c);
+			break;
 		//case self::STATE_BINARY:
-		//	break;
-		//case self::STATE_CMD:
-		//	switch ($c) {
-		//	case self::CMD_IAC:
-		//		$this->state = self::
-		//	}
 		//	break;
 		//case self::STATE_OPT:
 		//	break;
