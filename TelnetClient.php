@@ -369,7 +369,6 @@ class TelnetClient {
 		$a_c = array();
 		while ((is_null($this->socket_timeout) || microtime(TRUE) < $endTs)
 				&& (is_null($length) || strlen($data) < $length)) {
-			$isGetMoreData = FALSE;
 			$c = $this->asyncGetc();
 			if ($c === FALSE) {
 				usleep(5);
@@ -381,7 +380,6 @@ class TelnetClient {
 			$a_c[] = $c;
 
 			$isGetMoreData = $this->processStateMachine($a_c);
-
 			if (!$isGetMoreData && count($a_c) > 0) {
 				$newData = implode($a_c);
 				if (self::$DEBUG) {
