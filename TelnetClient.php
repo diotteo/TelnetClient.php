@@ -454,6 +454,15 @@ class TelnetClient {
 
 
 	/**
+	 * @return string the current regex prompt without the enclosing
+	 *   slashes and $ metacharacter (see setRegexPrompt())
+	 */
+	public function getRegexPrompt() {
+		return $this->regex_prompt;
+	}
+
+
+	/**
 	 * Sets a regex string to respond to.
 	 * This should be set to the last line of the command line prompt.
 	 *
