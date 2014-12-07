@@ -325,7 +325,7 @@ class TelnetClient {
 
 
 	/**
-	 * @deprecated please use setSocketTimeout()
+	 * @deprecated please use setSocketTimeout($socket_timeout)
 	 */
 	public function setStreamTimeout($socket_timeout) {
 		return $this->setSocketTimeout($socket_timeout);
