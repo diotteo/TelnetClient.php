@@ -134,7 +134,6 @@ class TelnetClient {
 	private $host;
 	private $ip_address;
 	private $port;
-	private $timeout;
 	private $connect_timeout; //Timeout to connect to remote
 	private $socket_timeout; //Timeout to wait for data
 
@@ -361,7 +360,7 @@ class TelnetClient {
 
 
 	/**
-	 * Reads up to $length bytes of data (TELNET commands are not counted) or wait for $timeout seconds, whichever occurs first
+	 * Reads up to $length bytes of data (TELNET commands are not counted) or wait for $this->socket_timeout seconds, whichever occurs first
 	 *
 	 * @param mixed $length: maximum number of data bytes to read. Either a non-negative int or NULL (infinite length)
 	 *
@@ -378,7 +377,7 @@ class TelnetClient {
 		$data = '';
 		$endTs = microtime(TRUE) + $this->socket_timeout;
 		$a_c = array();
-		while ((is_null($timeout) || microtime(TRUE) < $endTs)
+		while ((is_null($this->socket_timeout) || microtime(TRUE) < $endTs)
 				&& (is_null($length) || strlen($data) < $length)) {
 			$isGetMoreData = FALSE;
 			$c = $this->asyncGetc();
