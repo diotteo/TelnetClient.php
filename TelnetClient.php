@@ -13,6 +13,9 @@
  * Modified by Frederik Sauer <fsa@dwarf.dk>
  *
  * Rewritten by Olivier Diotte <olivier+github@diotte.ca>
+ *
+ * @author Olivier Diotte <olivier+github@diotte.ca>
+ * @version 1.0
  */
 
 namespace TelnetClient;
