@@ -8,10 +8,13 @@ Usage example:
 ```php
 require_once(__DIR__ . '/TelnetClient.php');
 
+use TelnetClient\TelnetClient;
+
 //Uncomment this to get debug logging
 //TelnetClient::setDebug(true);
 
-$telnet = new TelnetClient('127.0.0.1', 23, 10, '');
+$telnet = new TelnetClient('127.0.0.1', 23);
+$telnet->connect();
 $telnet->login('telnetuser', 'weak');
 $cmdResult = $telnet->exec('ls /');
 
