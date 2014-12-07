@@ -463,6 +463,18 @@ class TelnetClient {
 					}
 					break;
 
+				//Replace <CR> <LF> by "\n" (only in STATE_NORMAL)
+				case self::NVT_CR:
+					if (count($a_c) < 2) {
+						$isGetMoreData = true;
+					} else {
+						switch ($a_c[1]) {
+						case self::NVT_LF:
+							$a_c = array("\n");
+							break;
+						}
+					}
+					break;
 				default:
 					//Pass, handled below after the switch ()
 				}
@@ -485,7 +497,6 @@ class TelnetClient {
 
 			if (!$isGetMoreData && count($a_c) > 0) {
 				$newData = implode($a_c);
-				preg_replace('/' . self::NVT_CR . self::NVT_LF . '/', "\n", $newData);
 				if (self::$DEBUG) {
 					print("Adding " . (ctype_print($newData) ? "\"{$newData}\"" : "(0x" . bin2hex($newData) . ")") . " to buffer\n");
 					//print("Adding \"{$newData}\" (0x" . bin2hex($newData) . ") to buffer (count = " . count($a_c) . " len = " . strlen($newData) . ")\n");
