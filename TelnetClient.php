@@ -143,7 +143,6 @@ class TelnetClient {
 	private $regex_prompt;
 	private $errno;
 	private $errstr;
-	private $strip_prompt = TRUE;
 
 	private $state;
 	private $a_c;
@@ -328,17 +327,6 @@ class TelnetClient {
 	public function setRegexPrompt($str = '\$') {
 		$this->regex_prompt = $str;
 		return self::TELNET_OK;
-	}
-
-
-	/**
-	 * Set if the buffer should be stripped from the buffer after reading.
-	 *
-	 * @param $strip boolean if the prompt should be stripped.
-	 * @return void
-	 */
-	public function stripPromptFromBuffer($strip) {
-		$this->strip_prompt = $strip;
 	}
 
 
@@ -580,24 +568,6 @@ class TelnetClient {
 		}
 
 		return self::TELNET_OK;
-	}
-
-
-	/**
-	 * Returns the content of the command buffer
-	 *
-	 * @return string Content of the command buffer
-	 */
-	protected function getBuffer() {
-		// Remove all carriage returns from line breaks
-		$buf = preg_replace('/\r\n|\r/', "\n", $this->buffer);
-		// Cut last line from buffer (almost always prompt)
-		if ($this->strip_prompt) {
-			$buf = explode("\n", $buf);
-			unset($buf[count($buf) - 1]);
-			$buf = implode("\n", $buf);
-		}
-		return trim($buf);
 	}
 
 
