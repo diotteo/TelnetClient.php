@@ -530,6 +530,10 @@ class TelnetClient {
 			$buffer .= self::NVT_CR . self::NVT_LF;
 		}
 
+		/*
+		 * FIXME: This is dubious: why not rely on DO ECHO?
+		 * (Admittedly the original code WONT/DONT all options and my test servers don't respect DONT ECHO)
+		 */
 		$this->global_buffer .= $buffer;
 		$ret = fwrite($this->socket, $buffer);
 		if ($ret !== strlen($buffer)) { //|| $ret === FALSE) {
