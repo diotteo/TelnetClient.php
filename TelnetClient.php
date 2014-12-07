@@ -432,25 +432,47 @@ class TelnetClient {
 	 * @throws \InvalidArgumentException if $length is int and smaller than 1
 	 * @throws \InvalidArgumentException if $length is null and socket_timeout is null
 	 */
-	/* FIXME: Refactor such that it is possible to also just get all received data
-	 * while still processing said data in the state machine
-	 */
-	private function waitForData($length = null, &$hasTimedout) {
-
+	private function waitForNbData($length = null, &$hasTimedout) {
 		if (is_null($length) && is_null($this->socket_timeout)) {
 			throw new \InvalidArgumentException('Would wait infinitely');
 		} else if (!is_null($length) && (!is_int($length) || $length < 1)) {
 			throw new \InvalidArgumentException('$length must be a positive int');
 		}
 
+		$cb = function ($nbchar, $c, $length) {
+					return is_null($length) || $nbchar < $length;
+				};
+
+		return $this->getMoreData($cb, $hasTimedout, $length);
+	}
+
+
+	private function getRemainingData(&$hasTimedout) {
+		$cb = function ($nbchar, $c, $userData) {
+					return $c !== false;
+				};
+
+		return $this->getMoreData($cb, $hasTimedout);
+	}
+
+
+	/**
+	 * @param callable isGetMoreData_cb boolean isGetMoreData_cb(numberOfCharactersInTheArray, lastCharacter, userData), $c will be false if no character is no more characters are available at the moment
+	 * @param boolean hasTimedout
+	 */
+	private function getMoreData(callable $isGetMoreData_cb, &$hasTimedout, $userData = null) {
 		$data = '';
 		$endTs = microtime(true) + $this->socket_timeout;
 		$a_c = array();
-		while ((is_null($this->socket_timeout) || microtime(true) < $endTs)
-				&& (is_null($length) || strlen($data) < $length)) {
+		$c = null;
+		$isGetMoreData = true;
+		$hasTimedout = false;
+		while (!$hasTimedout
+				&& ($isGetMoreData || call_user_func($isGetMoreData_cb, count($data), $c, $userData))) {
 			$c = $this->asyncGetc();
 			if ($c === false) {
 				usleep(5);
+				$hasTimedout = (!is_null($this->socket_timeout) && microtime(true) > $endTs);
 				continue;
 			} else {
 				//Reset the timeout
@@ -702,7 +724,7 @@ class TelnetClient {
 
 		$this->clearBuffer();
 		do {
-			$data = $this->waitForData(1, $hasTimedout);
+			$data = $this->waitForNbData(1, $hasTimedout);
 			$this->buffer .= $data;
 			$this->global_buffer .= $data;
 
