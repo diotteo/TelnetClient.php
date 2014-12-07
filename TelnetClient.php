@@ -258,7 +258,7 @@ class TelnetClient {
 		$this->host = $host;
 		$this->port = $port;
 
-		$this->state = self::STATE_NORMAL;
+		$this->state = self::STATE_DEFAULT;
 		$this->connect_timeout = $connect_timeout;
 		$this->socket_timeout = $socket_timeout;
 	}
@@ -521,6 +521,7 @@ class TelnetClient {
 				$a_c = array(self::CMD_IAC);
 
 			} else {
+				$isGetMoreData = TRUE;
 				$this->state = self::STATE_CMD;
 			}
 			break;
@@ -558,7 +559,11 @@ class TelnetClient {
 			//Get more data
 			$isGetMoreData = TRUE;
 
+		} else if ($a_c[0] !== self::CMD_IAC) {
+			//Pass;
+
 		} else {
+			$cmd = $a_c[1];
 			$opt = $a_c[2];
 			$replyCmd = NULL;
 			switch ($cmd) {
