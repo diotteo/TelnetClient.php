@@ -341,6 +341,7 @@ class TelnetClient {
 	 * @return string Command result
 	 */
 	public function exec($command, $add_newline = true) {
+		//TODO: Pass $command into the state machine to escape IACs, also look at UTF-8 RFC about how to escape newlines
 		$this->write($command, $add_newline);
 		$this->waitPrompt();
 		return $this->buffer;
@@ -564,6 +565,7 @@ class TelnetClient {
 	 *
 	 * @param array $a_c array of characters to process.
 	 * @return boolean true if more characters are needed, false if processing is done ($a_c was cleaned of TELNET protocol data such that it contains only actual data)
+	 * @throws ConnectionException if sending command negotiation fails
 	 */
 	private function processStateMachineCmdState(&$a_c) {
 		$isGetMoreData = false;
@@ -605,6 +607,7 @@ class TelnetClient {
 				break;
 			case self::CMD_WONT:
 				//Pass, we are not supposed to "acknowledge" WONTs
+				//TODO: Reread the Q method RFC, I don't remember if this is right
 				break;
 
 			default:
