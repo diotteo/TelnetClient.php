@@ -669,7 +669,7 @@ class TelnetClient {
 		/* FIXME: This also doesn't respect the order of things:
 		 * since we return as soon as the prompt is found (regardless of whether or not more characters have been received or not), appending to the global buffer means those characters get written after (while they were received before)
 		 */
-		$this->global_buffer .= $buffer;
+		//$this->global_buffer .= $buffer;
 		$ret = fwrite($this->socket, $buffer);
 		if ($ret !== strlen($buffer)) { //|| $ret === false) {
 			throw new ConnectionException("Error writing to socket");
