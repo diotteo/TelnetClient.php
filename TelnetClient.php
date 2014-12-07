@@ -157,15 +157,13 @@ class TelnetClient {
 	private $port;
 	private $connect_timeout; //Timeout to connect to remote
 	private $socket_timeout; //Timeout to wait for data
+	private $state;
 
 	private $socket = null;
 	private $buffer = null;
 	private $regex_prompt;
 	private $errno;
 	private $errstr;
-
-	private $state;
-	private $a_c;
 
 	private $global_buffer = '';
 
