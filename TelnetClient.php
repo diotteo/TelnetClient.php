@@ -17,24 +17,6 @@
  * Modified by Olivier Diotte <olivier+github@diotte.ca>
  */
 class TelnetClient {
-	private static $DEBUG = FALSE;
-
-	private $host;
-	private $port;
-	private $timeout;
-	private $connect_timeout; //Timeout to connect to remote
-	private $socket_timeout; //Timeout to wait for data
-
-	private $socket = NULL;
-	private $buffer = NULL;
-	private $regex_prompt;
-	private $errno;
-	private $errstr;
-	private $strip_prompt = TRUE;
-
-	private $state;
-	private $a_c;
-
 	/* NVT special characters
 	 * specified in the same order as in RFC854
 	 * same name as there, with a NVT_ prefix (to avoid clash with PHP keywords)
@@ -50,17 +32,6 @@ class TelnetClient {
 	const NVT_HT   = "\x09";
 	const NVT_VT   = "\x0B";
 	const NVT_FF   = "\x0C";
-
-	private static $NVTP_SPECIALS = array(
-			self::NVT_NUL  => 'NUL',
-			self::NVT_LF   => 'LF',
-			self::NVT_CR   => 'CR',
-			self::NVT_BEL  => 'BEL',
-			self::NVT_BS   => 'BS',
-			self::NVT_HT   => 'HT',
-			self::NVT_VT   => 'VT',
-			self::NVT_FF   => 'FF',
-			);
 
 	/* TELNET command characters
 	 * "Note that these codes and code sequences have the indicated meaning
@@ -87,6 +58,41 @@ class TelnetClient {
 	const CMD_DONT = "\xFE";
 	const CMD_IAC  = "\xFF"; //Interpret As Command
 
+	const OPT_TXBIN     = "\x00"; //Transmit binary, RFC856
+	const OPT_ECHO      = "\x01"; //Echo, RFC857
+	const OPT_SGA       = "\x03"; //Suppress Go Ahead, RFC858 (makes connection full-duplex instead of half-duplex)
+	const OPT_STATUS    = "\x05"; //Status, RFC859
+	const OPT_TIMMRK    = "\x06"; //Timing Mark, RFC860
+	const OPT_EXTOPL    = "\xFF"; //Extended options list, RFC861
+	const OPT_EOR       = "\x19"; //25, End of record, RFC885
+	const OPT_3270_R    = "\x1D"; //29, 3270 Regimes (?), RFC1041
+	const OPT_NAWS      = "\x1F"; //31, Negotiate About Window Size, RFC1073
+	const OPT_TERMSPD   = "\x20"; //32, Terminal speed, RFC1079
+	const OPT_TERMTYP   = "\x18"; //24, Terminal type, RFC1091
+	const OPT_XDISPLOC  = "\x23"; //35, X Display Location, RFC1096
+	const OPT_LINEMODE  = "\x22"; //34, Linemode, RFC1116
+	const OPT_NEW_ENV   = "\x27"; //39, New environment variable, RFC1572
+	const OPT_R_FLW_CTR = "\x21"; //33, Remote Flow Control, RFC1080
+
+	const STATE_NORMAL = 0;
+
+	const TELNET_ERROR = FALSE;
+	const TELNET_OK = TRUE;
+
+
+	private static $DEBUG = FALSE;
+
+	private static $NVTP_SPECIALS = array(
+			self::NVT_NUL  => 'NUL',
+			self::NVT_LF   => 'LF',
+			self::NVT_CR   => 'CR',
+			self::NVT_BEL  => 'BEL',
+			self::NVT_BS   => 'BS',
+			self::NVT_HT   => 'HT',
+			self::NVT_VT   => 'VT',
+			self::NVT_FF   => 'FF',
+			);
+
 	private static $CMDS = array(
 			self::CMD_SE   => 'SE',
 			self::CMD_NOP  => 'NOP',
@@ -105,23 +111,6 @@ class TelnetClient {
 			self::CMD_DONT => 'DONT',
 			self::CMD_IAC  => 'IAC'
 			);
-
-
-	const OPT_TXBIN     = "\x00"; //Transmit binary, RFC856
-	const OPT_ECHO      = "\x01"; //Echo, RFC857
-	const OPT_SGA       = "\x03"; //Suppress Go Ahead, RFC858 (makes connection full-duplex instead of half-duplex)
-	const OPT_STATUS    = "\x05"; //Status, RFC859
-	const OPT_TIMMRK    = "\x06"; //Timing Mark, RFC860
-	const OPT_EXTOPL    = "\xFF"; //Extended options list, RFC861
-	const OPT_EOR       = "\x19"; //25, End of record, RFC885
-	const OPT_3270_R    = "\x1D"; //29, 3270 Regimes (?), RFC1041
-	const OPT_NAWS      = "\x1F"; //31, Negotiate About Window Size, RFC1073
-	const OPT_TERMSPD   = "\x20"; //32, Terminal speed, RFC1079
-	const OPT_TERMTYP   = "\x18"; //24, Terminal type, RFC1091
-	const OPT_XDISPLOC  = "\x23"; //35, X Display Location, RFC1096
-	const OPT_LINEMODE  = "\x22"; //34, Linemode, RFC1116
-	const OPT_NEW_ENV   = "\x27"; //39, New environment variable, RFC1572
-	const OPT_R_FLW_CTR = "\x21"; //33, Remote Flow Control, RFC1080
 
 	private static $OPTS = array(
 			self::OPT_TXBIN     => 'Transmit Binary',
@@ -142,12 +131,23 @@ class TelnetClient {
 			);
 
 
-	const STATE_NORMAL = 0;
+	private $host;
+	private $port;
+	private $timeout;
+	private $connect_timeout; //Timeout to connect to remote
+	private $socket_timeout; //Timeout to wait for data
+
+	private $socket = NULL;
+	private $buffer = NULL;
+	private $regex_prompt;
+	private $errno;
+	private $errstr;
+	private $strip_prompt = TRUE;
+
+	private $state;
+	private $a_c;
 
 	private $global_buffer = '';
-
-	const TELNET_ERROR = FALSE;
-	const TELNET_OK = TRUE;
 
 
 	/**
@@ -249,6 +249,7 @@ class TelnetClient {
 		return self::TELNET_OK;
 	}
 
+
 	/**
 	 * Closes IP socket
 	 *
@@ -264,6 +265,7 @@ class TelnetClient {
 		return self::TELNET_OK;
 	}
 
+
 	/**
 	 * Executes command and returns a string with result.
 	 * This method is a wrapper for lower level private methods
@@ -277,6 +279,7 @@ class TelnetClient {
 		$this->waitPrompt();
 		return $this->getBuffer();
 	}
+
 
 	/**
 	 * Attempts login to remote host.
@@ -309,6 +312,7 @@ class TelnetClient {
 		return self::TELNET_OK;
 	}
 
+
 	/**
 	 * Sets the string of characters to respond to.
 	 * This should be set to the last character of the command line prompt
@@ -319,6 +323,7 @@ class TelnetClient {
 	public function setPrompt($str = '$') {
 		return $this->setRegexPrompt(preg_quote($str, '/'));
 	}
+
 
 	/**
 	 * Sets a regex string to respond to.
@@ -331,6 +336,7 @@ class TelnetClient {
 		$this->regex_prompt = $str;
 		return self::TELNET_OK;
 	}
+
 
 	/**
 	 * Set if the buffer should be stripped from the buffer after reading.
@@ -498,6 +504,7 @@ class TelnetClient {
 		return $data;
 	}
 
+
 	/**
 	 * Write command to a socket
 	 *
@@ -526,6 +533,7 @@ class TelnetClient {
 		return self::TELNET_OK;
 	}
 
+
 	/**
 	 * Returns the content of the command buffer
 	 *
@@ -543,6 +551,7 @@ class TelnetClient {
 		return trim($buf);
 	}
 
+
 	/**
 	 * Returns the content of the global command buffer
 	 *
@@ -551,6 +560,7 @@ class TelnetClient {
 	public function getGlobalBuffer() {
 		return $this->global_buffer;
 	}
+
 
 	/**
 	 * Reads socket until prompt is encountered
