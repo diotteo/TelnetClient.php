@@ -418,6 +418,14 @@ class TelnetClient {
 
 
 	/**
+	 * Discards unread but received data, processing options if any
+	 */
+	public function discardRemainingData() {
+		$this->getRemainingData($has_timed_out);
+	}
+
+
+	/**
 	 * Attempts login to remote host.
 	 *
 	 * @param string $username Username
