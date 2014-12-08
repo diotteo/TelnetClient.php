@@ -153,7 +153,7 @@ function parseArguments() {
 
 
 function cleanMsg($str) {
-	$clean = preg_replace("/[^\n[:print:]]/", "", $str);
+	$clean = addcslashes($str, "\r\t");
 	return $clean;
 }
 
@@ -173,8 +173,8 @@ foreach ($cmdList as $cmd) {
 	print("\n***Executing cmd \"{$cmd}\"***\n");
 	$out = $telnet->exec($cmd);
 
-	print("\n***out=***\n" . $out . "\n");
-	print("\n***Global buffer=***\n" . $telnet->getGlobalBuffer() . "\n");
+	print("\n***out=***\n" . cleanMsg($out) . "\n");
+	print("\n***Global buffer=***\n" . cleanMsg($telnet->getGlobalBuffer()) . "\n");
 }
 
 $telnet->disconnect();
