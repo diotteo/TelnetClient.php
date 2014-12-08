@@ -153,7 +153,7 @@ function parseArguments() {
 
 
 function cleanMsg($str) {
-	$clean = addcslashes($str, "\r\t");
+	$clean = addcslashes($str, "\r\t\"");
 	return $clean;
 }
 
@@ -170,11 +170,11 @@ $telnet->connect();
 $telnet->setPrompt('$');
 $telnet->login($username, $password, $loginPrompt, $passPrompt);
 foreach ($cmdList as $cmd) {
-	print("\n***Executing cmd \"{$cmd}\"***\n");
+	print("[Executing cmd \"{$cmd}\"]\n");
 	$out = $telnet->exec($cmd);
 
-	print("\n***out=***\n" . cleanMsg($out) . "\n");
-	print("\n***Global buffer=***\n" . cleanMsg($telnet->getGlobalBuffer()) . "\n");
+	print("\n[output]=\"" . cleanMsg($out) . "\"\n");
+	print("[Global buffer]=\"" . cleanMsg($telnet->getGlobalBuffer()) . "\"\n");
 }
 
 $telnet->disconnect();
