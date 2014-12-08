@@ -340,6 +340,7 @@ class TelnetClient {
 	/**
 	 * @param float|null $socket_timeout the timeout to wait for new data (null = infinite)
 	 * @return void
+	 * @throws \InvalidArgumentException if $socket_timeout is of the wrong type or value
 	 */
 	public function setSocketTimeout($socket_timeout) {
 		if (!is_null($socket_timeout)
@@ -416,9 +417,6 @@ class TelnetClient {
 
 	/**
 	 * Attempts login to remote host.
-	 * This method is a wrapper for lower level private methods and should be
-	 * modified to reflect telnet implementation details like login/password
-	 * and line prompts. Defaults to standard unix non-root prompts
 	 *
 	 * @param string $username Username
 	 * @param string $password Password
