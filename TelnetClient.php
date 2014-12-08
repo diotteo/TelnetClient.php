@@ -168,6 +168,7 @@ class TelnetClient {
 	private $regex_prompt;
 	private $errno;
 	private $errstr;
+	private $hasGoAhead;
 
 
 
@@ -271,6 +272,7 @@ class TelnetClient {
 		$this->state = self::STATE_DEFAULT;
 		$this->global_buffer = '';
 		$this->doGetRemainingData = true;
+		$this->hasGoAhead = false; //By default the server speaks first (?)
 	}
 
 
