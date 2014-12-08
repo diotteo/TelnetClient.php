@@ -161,14 +161,14 @@ class TelnetClient {
 	private $connect_timeout; //Timeout to connect to remote
 	private $socket_timeout; //Timeout to wait for data
 	private $state;
-
-	private $socket = null;
-	private $buffer = null;
+	private $global_buffer;
+	private $doGetRemainingData;
+	private $socket;
+	private $buffer;
 	private $regex_prompt;
 	private $errno;
 	private $errstr;
 
-	private $global_buffer = '';
 
 
 	/**
@@ -269,6 +269,8 @@ class TelnetClient {
 		$this->setPrompt($prompt);
 
 		$this->state = self::STATE_DEFAULT;
+		$this->global_buffer = '';
+		$this->doGetRemainingData = true;
 	}
 
 
