@@ -162,13 +162,13 @@ class TelnetClient {
 	private $socket_timeout; //Timeout to wait for data
 	private $state;
 	private $global_buffer;
-	private $doGetRemainingData;
+	private $do_get_remaining_data;
 	private $socket;
 	private $buffer;
 	private $regex_prompt;
 	private $errno;
 	private $errstr;
-	private $hasGoAhead;
+	private $has_go_ahead;
 
 
 
@@ -271,8 +271,8 @@ class TelnetClient {
 
 		$this->state = self::STATE_DEFAULT;
 		$this->global_buffer = '';
-		$this->doGetRemainingData = true;
-		$this->hasGoAhead = false; //By default the server speaks first (?)
+		$this->do_get_remaining_data = true;
+		$this->has_go_ahead = false; //By default the server speaks first (?)
 	}
 
 
@@ -411,7 +411,7 @@ class TelnetClient {
 	public function exec($command, $add_newline = true) {
 		//TODO: Pass $command into the state machine to escape IACs, also look at UTF-8 RFC about how to escape newlines
 		$this->write($command, $add_newline);
-		$this->waitPrompt($this->doGetRemainingData);
+		$this->waitPrompt($this->do_get_remaining_data);
 
 		return $this->buffer;
 	}
@@ -429,16 +429,16 @@ class TelnetClient {
 		$prompt = $this->regex_prompt;
 		try {
 			$this->setPrompt($login_prompt);
-			$this->waitPrompt($this->doGetRemainingData);
+			$this->waitPrompt($this->do_get_remaining_data);
 			$this->write($username);
 			$this->setPrompt($password_prompt);
-			$this->waitPrompt($this->doGetRemainingData);
+			$this->waitPrompt($this->do_get_remaining_data);
 			$this->write($password);
 
 			//Reset prompt
 			$this->regex_prompt = $prompt;
 
-			$this->waitPrompt($this->doGetRemainingData);
+			$this->waitPrompt($this->do_get_remaining_data);
 		} catch (Exception $e) {
 			throw new LoginException("Login failed", 0, $e);
 		}
@@ -452,7 +452,7 @@ class TelnetClient {
 	 * @return void
 	 */
 	public function setDoGetRemainingData($enable) {
-		$this->doGetRemainingData = !!$enable;
+		$this->do_get_remaining_data = !!$enable;
 	}
 
 
@@ -460,7 +460,7 @@ class TelnetClient {
 	 * @return boolean true if all remaining data is to be fetched after the prompt is found, false otherwise
 	 */
 	public function getDoGetRemainingData() {
-		return $this->doGetRemainingData;
+		return $this->do_get_remaining_data;
 	}
 
 
@@ -515,11 +515,11 @@ class TelnetClient {
 
 
 	/**
-	 * @deprecated please use waitForNbData(1, $hasTimedout);
+	 * @deprecated please use waitForNbData(1, $has_timed_out);
 	 * Note: This function doesn't add the returned characters to the buffer nor the global buffer
 	 */
 	protected function getc() {
-		$c = $this->waitForNbData(1, $hasTimedout);
+		$c = $this->waitForNbData(1, $has_timed_out);
 		return $c;
 	}
 
@@ -538,14 +538,14 @@ class TelnetClient {
 	 * Reads up to $length bytes of data (TELNET commands are not counted) or wait for $this->socket_timeout seconds, whichever occurs first
 	 *
 	 * @param int|null $length maximum number of data bytes to read. Either a non-negative int or null (infinite length)
-	 * @param mixed $hasTimedout Reference. Set to true if we timed out waiting for $length data, false otherwise.
+	 * @param mixed $has_timed_out Reference. Set to true if we timed out waiting for $length data, false otherwise.
 	 *
 	 * @return string the raw data read as a string
 	 * @throws \InvalidArgumentException if $length is neither null nor int
 	 * @throws \InvalidArgumentException if $length is int and smaller than 1
 	 * @throws \InvalidArgumentException if $length is null and socket_timeout is null
 	 */
-	private function waitForNbData($length = null, &$hasTimedout) {
+	private function waitForNbData($length = null, &$has_timed_out) {
 		if (is_null($length) && is_null($this->socket_timeout)) {
 			throw new \InvalidArgumentException('Would wait infinitely');
 		} else if (!is_null($length) && (!is_int($length) || $length < 1)) {
@@ -556,36 +556,36 @@ class TelnetClient {
 					return is_null($length) || $nbchar < $length;
 				};
 
-		return $this->getMoreData($cb, $hasTimedout, $length);
+		return $this->getMoreData($cb, $has_timed_out, $length);
 	}
 
 
-	private function getRemainingData(&$hasTimedout) {
+	private function getRemainingData(&$has_timed_out) {
 		$cb = function ($nbchar, $c, $userData) {
 					return $c !== false;
 				};
 
-		return $this->getMoreData($cb, $hasTimedout);
+		return $this->getMoreData($cb, $has_timed_out);
 	}
 
 
 	/**
-	 * @param callable isGetMoreData_cb boolean isGetMoreData_cb(numberOfCharactersInTheArray, lastCharacter, userData), $c will be false if no character is no more characters are available at the moment
-	 * @param boolean hasTimedout
+	 * @param callable get_more_data_cb boolean get_more_data_cb(numberOfCharactersInTheArray, lastCharacter, userData), $c will be false if no character is no more characters are available at the moment
+	 * @param boolean has_timed_out
 	 */
-	private function getMoreData(callable $isGetMoreData_cb, &$hasTimedout, $userData = null) {
+	private function getMoreData(callable $get_more_data_cb, &$has_timed_out, $userData = null) {
 		$data = '';
 		$endTs = microtime(true) + $this->socket_timeout;
 		$a_c = array();
 		$c = null;
-		$isGetMoreData = true;
-		$hasTimedout = false;
-		while (!$hasTimedout
-				&& ($isGetMoreData || call_user_func($isGetMoreData_cb, count($data), $c, $userData))) {
+		$is_get_more_data = true;
+		$has_timed_out = false;
+		while (!$has_timed_out
+				&& ($is_get_more_data || call_user_func($get_more_data_cb, count($data), $c, $userData))) {
 			$c = $this->asyncGetc();
 			if ($c === false) {
 				usleep(5);
-				$hasTimedout = (!is_null($this->socket_timeout) && microtime(true) > $endTs);
+				$has_timed_out = (!is_null($this->socket_timeout) && microtime(true) > $endTs);
 				continue;
 			} else {
 				//Reset the timeout
@@ -593,15 +593,15 @@ class TelnetClient {
 			}
 			$a_c[] = $c;
 
-			$isGetMoreData = $this->processStateMachine($a_c);
-			if (!$isGetMoreData && count($a_c) > 0) {
-				$newData = implode($a_c);
+			$is_get_more_data = $this->processStateMachine($a_c);
+			if (!$is_get_more_data && count($a_c) > 0) {
+				$new_data = implode($a_c);
 				if (self::$DEBUG) {
-					print("Adding " . (ctype_print($newData) ? "\"{$newData}\"" : "(0x" . bin2hex($newData) . ")") . " to buffer\n");
-					//print("Adding \"{$newData}\" (0x" . bin2hex($newData) . ") to buffer (count = " . count($a_c) . " len = " . strlen($newData) . ")\n");
+					print("Adding " . (ctype_print($new_data) ? "\"{$new_data}\"" : "(0x" . bin2hex($new_data) . ")") . " to buffer\n");
+					//print("Adding \"{$new_data}\" (0x" . bin2hex($new_data) . ") to buffer (count = " . count($a_c) . " len = " . strlen($new_data) . ")\n");
 					//var_dump($a_c);
 				}
-				$data .= $newData;
+				$data .= $new_data;
 				$a_c = array();
 			}
 		}
@@ -619,14 +619,14 @@ class TelnetClient {
 	 * @throws UnimplementedException on unknown state
 	 */
 	private function processStateMachine(array &$a_c) {
-		$isGetMoreData = false;
+		$is_get_more_data = false;
 
 		switch ($this->state) {
 		case self::STATE_DEFAULT:
-			$isGetMoreData = $this->processStateMachineDefaultState($a_c);
+			$is_get_more_data = $this->processStateMachineDefaultState($a_c);
 			break;
 		case self::STATE_CMD:
-			$isGetMoreData = $this->processStateMachineCmdState($a_c);
+			$is_get_more_data = $this->processStateMachineCmdState($a_c);
 			break;
 		//case self::STATE_BINARY:
 		//	break;
@@ -641,7 +641,7 @@ class TelnetClient {
 			break;
 		}
 
-		return $isGetMoreData;
+		return $is_get_more_data;
 	}
 
 
@@ -652,12 +652,12 @@ class TelnetClient {
 	 * @return boolean true if more characters are needed, false if processing is done ($a_c was cleaned of TELNET protocol data such that it contains only actual data)
 	 */
 	private function processStateMachineDefaultState(array &$a_c) {
-		$isGetMoreData = false;
+		$is_get_more_data = false;
 
 		switch ($a_c[0]) {
 		case self::CMD_IAC:
 			if (count($a_c) < 2) {
-				$isGetMoreData = true;
+				$is_get_more_data = true;
 				break;
 			}
 			$cmd = $a_c[1];
@@ -666,18 +666,18 @@ class TelnetClient {
 				 * "With the current set-up, only the IAC need be doubled to be sent as data" --RFC854) */
 
 				//Add (only) one IAC character to the data
-				$isGetMoreData = false;
+				$is_get_more_data = false;
 				$a_c = array(self::CMD_IAC);
 
 			} else {
-				$isGetMoreData = true;
+				$is_get_more_data = true;
 				$this->state = self::STATE_CMD;
 			}
 			break;
 
 		case self::NVT_CR:
 			if (count($a_c) < 2) {
-				$isGetMoreData = true;
+				$is_get_more_data = true;
 			} else {
 				switch ($a_c[1]) {
 				case self::NVT_LF:
@@ -691,7 +691,7 @@ class TelnetClient {
 			//Pass, raw data
 		}
 
-		return $isGetMoreData;
+		return $is_get_more_data;
 	}
 
 
@@ -703,11 +703,11 @@ class TelnetClient {
 	 * @throws ConnectionException if sending command negotiation fails
 	 */
 	private function processStateMachineCmdState(array &$a_c) {
-		$isGetMoreData = false;
+		$is_get_more_data = false;
 
 		if (count($a_c) < 3) {
 			//Get more data
-			$isGetMoreData = true;
+			$is_get_more_data = true;
 
 		} else if ($a_c[0] !== self::CMD_IAC) {
 			//Pass;
@@ -715,14 +715,14 @@ class TelnetClient {
 		} else {
 			$cmd = $a_c[1];
 			$opt = $a_c[2];
-			$replyCmd = null;
+			$reply_cmd = null;
 			switch ($cmd) {
 			case self::CMD_SB:
 				if ($opt === self::CMD_SE) {
 					//Empty subnegotiation?! (pass)
 				} else if (end($a_c) !== self::CMD_SE) {
 					//Get more data
-					$isGetMoreData = true;
+					$is_get_more_data = true;
 				} else {
 					//TODO: Handle subnegotiation here
 					if (self::$DEBUG) {
@@ -734,11 +734,11 @@ class TelnetClient {
 			//TODO: Handle other commands
 			case self::CMD_DO: //FALLTHROUGH
 			case self::CMD_DONT:
-				$replyCmd = self::CMD_WONT;
+				$reply_cmd = self::CMD_WONT;
 				break;
 
 			case self::CMD_WILL:
-				$replyCmd = self::CMD_DONT;
+				$reply_cmd = self::CMD_DONT;
 				break;
 			case self::CMD_WONT:
 				//Pass, we are not supposed to "acknowledge" WONTs
@@ -751,8 +751,8 @@ class TelnetClient {
 				}
 			}
 
-			if (!is_null($replyCmd)) {
-				$buffer = self::CMD_IAC . $replyCmd . $opt;
+			if (!is_null($reply_cmd)) {
+				$buffer = self::CMD_IAC . $reply_cmd . $opt;
 				$ret = fwrite($this->socket, $buffer);
 				if ($ret !== strlen($buffer)) { //|| $ret === false) {
 					throw new ConnectionException("Error writing to socket");
@@ -764,14 +764,14 @@ class TelnetClient {
 					print($str . "\n");
 				}
 			}
-			if (!$isGetMoreData) {
+			if (!$is_get_more_data) {
 				$a_c = array();
 				//FIXME: Do we always return to the default state? Or is it possible to negotiate in binary mode for example?
 				$this->state = self::STATE_DEFAULT;
 			}
 		}
 
-		return $isGetMoreData;
+		return $is_get_more_data;
 	}
 
 
@@ -828,28 +828,28 @@ class TelnetClient {
 	/**
 	 * Reads socket until prompt is encountered
 	 *
-	 * @param boolean $doGetRemainingData set to true to read all received data after the prompt is found
+	 * @param boolean $do_get_remaining_data set to true to read all received data after the prompt is found
 	 * @return void
 	 * @throws ConnectionTimeoutException on time out
 	 */
-	protected function waitPrompt($doGetRemainingData = false) {
+	protected function waitPrompt($do_get_remaining_data = false) {
 		if (self::$DEBUG) {
 			print("\nWaiting for prompt \"{$this->regex_prompt}\"\n");
 		}
 
 		$this->clearBuffer();
 		do {
-			$data = $this->waitForNbData(1, $hasTimedout);
+			$data = $this->waitForNbData(1, $has_timed_out);
 			$this->buffer .= $data;
 			$this->global_buffer .= $data;
 
-			if ($hasTimedout) {
+			if ($has_timed_out) {
 				throw new ConnectionTimeoutException("Connection timed out");
 			}
 		} while (preg_match("/{$this->regex_prompt}$/", $this->buffer) === 0);
 
-		if ($doGetRemainingData) {
-			$data = $this->getRemainingData($hasTimedout);
+		if ($do_get_remaining_data) {
+			$data = $this->getRemainingData($has_timed_out);
 			$this->buffer .= $data;
 			$this->global_buffer .= $data;
 		}
