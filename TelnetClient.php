@@ -410,7 +410,8 @@ class TelnetClient {
 	public function exec($command, $add_newline = true) {
 		//TODO: Pass $command into the state machine to escape IACs, also look at UTF-8 RFC about how to escape newlines
 		$this->write($command, $add_newline);
-		$this->waitPrompt();
+		$this->waitPrompt($this->doGetRemainingData);
+
 		return $this->buffer;
 	}
 
@@ -427,21 +428,38 @@ class TelnetClient {
 		$prompt = $this->regex_prompt;
 		try {
 			$this->setPrompt($login_prompt);
-			$this->waitPrompt();
+			$this->waitPrompt($this->doGetRemainingData);
 			$this->write($username);
 			$this->setPrompt($password_prompt);
-			$this->waitPrompt();
+			$this->waitPrompt($this->doGetRemainingData);
 			$this->write($password);
 
 			//Reset prompt
 			$this->regex_prompt = $prompt;
 
-			$this->waitPrompt();
+			$this->waitPrompt($this->doGetRemainingData);
 		} catch (Exception $e) {
 			throw new LoginException("Login failed", 0, $e);
 		}
 
 		return self::TELNET_OK;
+	}
+
+
+	/**
+	 * @param boolean $enable true if all remaining data is to be fetched after the prompt is found, false otherwise
+	 * @return void
+	 */
+	public function setDoGetRemainingData($enable) {
+		$this->doGetRemainingData = !!$enable;
+	}
+
+
+	/**
+	 * @return boolean true if all remaining data is to be fetched after the prompt is found, false otherwise
+	 */
+	public function getDoGetRemainingData() {
+		return $this->doGetRemainingData;
 	}
 
 
@@ -808,10 +826,11 @@ class TelnetClient {
 	/**
 	 * Reads socket until prompt is encountered
 	 *
+	 * @param boolean $doGetRemainingData set to true to read all received data after the prompt is found
 	 * @return void
 	 * @throws ConnectionTimeoutException on time out
 	 */
-	protected function waitPrompt() {
+	protected function waitPrompt($doGetRemainingData = false) {
 		if (self::$DEBUG) {
 			print("\nWaiting for prompt \"{$this->regex_prompt}\"\n");
 		}
@@ -826,5 +845,11 @@ class TelnetClient {
 				throw new ConnectionTimeoutException("Connection timed out");
 			}
 		} while (preg_match("/{$this->regex_prompt}$/", $this->buffer) === 0);
+
+		if ($doGetRemainingData) {
+			$data = $this->getRemainingData($hasTimedout);
+			$this->buffer .= $data;
+			$this->global_buffer .= $data;
+		}
 	}
 }
