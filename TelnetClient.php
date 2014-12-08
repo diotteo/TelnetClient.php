@@ -302,7 +302,7 @@ class TelnetClient {
 		// attempt connection - suppress warnings
 		$this->socket = @fsockopen($this->ip_address, $this->port, $this->errno, $this->errstr, $this->connect_timeout);
 		if ($this->socket === false) {
-			throw new ConnectionException("Cannot connect to $this->host on port $this->port");
+			throw new ConnectionException("Cannot connect to $this->host on port $this->port (errno={$this->errno} errstr='{$this->errstr}')");
 		}
 		stream_set_blocking($this->socket, 0);
 
