@@ -401,7 +401,6 @@ class TelnetClient {
 
 	/**
 	 * Executes command and returns a string with result.
-	 * This method is a wrapper for lower level private methods
 	 *
 	 * @param string $command Command to execute
 	 * @param boolean $add_newline Default true, adds newline to the command
