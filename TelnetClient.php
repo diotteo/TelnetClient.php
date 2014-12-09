@@ -555,6 +555,7 @@ class TelnetClient {
 		}
 
 		$cb = function ($nbchar, $c, $length) {
+					//FIXME: This is wrong: if we get IAC in the middle, we will never return
 					return is_null($length) || $nbchar < $length;
 				};
 
@@ -572,8 +573,11 @@ class TelnetClient {
 
 
 	/**
-	 * @param callable get_more_data_cb boolean get_more_data_cb(numberOfCharactersInTheArray, lastCharacter, userData), $c will be false if no character is no more characters are available at the moment
+	 * @param callable $get_more_data_cb boolean get_more_data_cb(numberOfCharactersInTheArray, lastCharacter, userData), $c will be false if no character is no more characters are available at the moment
+	 * @param mixed $userData a user parameter passed to the callable
 	 * @throws ConnectionTimeoutException
+	 *
+	 * @return string|false the data received or false if none
 	 */
 	private function getMoreData($get_more_data_cb, $userData = null) {
 		$data = '';
