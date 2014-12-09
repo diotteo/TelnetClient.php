@@ -444,7 +444,9 @@ class TelnetClient {
 
 
 	public function getLine(&$matchesPrompt) {
-		$line = $this->getNextLine();
+		do {
+			$line = $this->getNextLine();
+		} while ($line === false);
 		$matchesPrompt = $this->matchesPrompt($line);
 		return $line;
 	}
