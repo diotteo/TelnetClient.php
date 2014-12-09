@@ -443,8 +443,10 @@ class TelnetClient {
 	}
 
 
-	public function getLine() {
-		return $this->getNextLine();
+	public function getLine(&$matchesPrompt) {
+		$line = $this->getNextLine();
+		$matchesPrompt = $this->matchesPrompt($line);
+		return $line;
 	}
 
 
@@ -887,6 +889,11 @@ class TelnetClient {
 	}
 
 
+	protected function matchesPrompt($line) {
+		return preg_match("/{$this->regex_prompt}/", $line) === 0;
+	}
+
+
 	/**
 	 * Reads socket until prompt is encountered
 	 *
@@ -909,7 +916,7 @@ class TelnetClient {
 				$a_line[] = rtrim($line, "\n");
 			}
 
-		} while (preg_match("/{$this->regex_prompt}/", $line) === 0);
+		} while (!$this->matchesPrompt($line));
 
 		if ($do_get_remaining_data) {
 			$line = $this->getRemainingData();
