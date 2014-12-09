@@ -482,7 +482,7 @@ class TelnetClient {
 			$this->regex_prompt = $prompt;
 
 			$this->waitPrompt($this->do_get_remaining_data);
-		} catch (Exception $e) {
+		} catch (\Exception $e) {
 			throw new LoginException("Login failed", 0, $e);
 		}
 
