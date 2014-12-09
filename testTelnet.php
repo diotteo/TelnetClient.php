@@ -12,6 +12,7 @@ $debug = 0;
 $cmdList = array('ls /');
 $loginPrompt = 'login:';
 $passPrompt = 'Password:';
+$prompt = '$';
 
 
 function getOptLvl($val) {
@@ -29,6 +30,7 @@ function printUsage() {
 	global $argv;
 	global $loginPrompt;
 	global $passPrompt;
+	global $prompt;
 
 	print(<<<EOT
 Usage: {$argv[0]} {options}
@@ -58,6 +60,7 @@ Options:
   -c <cmd>
   --cmd <cmd>: Execute <cmd> (may be specified multiple times)
   
+  --prompt <prompt>: look for <prompt> instead of {$prompt}
   --login-prompt <login-prompt>: look for <login-prompt> instead of {$loginPrompt}
   --password-prompt <pass-prompt>: look for <pass-prompt> instead of {$passPrompt}
 
@@ -77,6 +80,7 @@ function parseArguments() {
 	global $cmdList;
 	global $loginPrompt;
 	global $passPrompt;
+	global $prompt;
 
 	$opts = getopt('dhc:H:P:u:p:v',
 			array(
@@ -86,10 +90,11 @@ function parseArguments() {
 				'cmd:',
 				'host:',
 				'port:',
-				'user',
-				'pass',
-				'login-prompt',
-				'pass-prompt'
+				'user:',
+				'pass:',
+				'prompt:',
+				'login-prompt:',
+				'pass-prompt:'
 			));
 
 	foreach ($opts as $opt => $optval) {
@@ -133,6 +138,9 @@ function parseArguments() {
 		case 'p':
 			$password = $optval;
 			break;
+		case 'prompt':
+			$prompt = $optval;
+			break;
 		case 'login-prompt':
 			$loginPrompt = $optval;
 			break;
@@ -167,7 +175,7 @@ TelnetClient::setDebug($debug > 0);
 $out = '';
 $telnet = new TelnetClient($host, $port);
 $telnet->connect();
-$telnet->setPrompt('$');
+$telnet->setPrompt($prompt);
 $telnet->login($username, $password, $loginPrompt, $passPrompt);
 foreach ($cmdList as $cmd) {
 	print("[Executing cmd \"{$cmd}\"]\n");
