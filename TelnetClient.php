@@ -465,18 +465,25 @@ class TelnetClient {
 	 *
 	 * @param string $username Username
 	 * @param string $password Password
+	 * @param string|null $login_prompt the string to look for before sending the username (null to skip)
+	 * @param string|null $password_prompt the string to look for before sending the password (null to skip)
 	 * @return boolean
 	 * @throws LoginException on error
 	 */
 	public function login($username, $password, $login_prompt = 'login:', $password_prompt = 'Password:') {
 		$prompt = $this->regex_prompt;
 		try {
-			$this->setPrompt($login_prompt);
-			$this->waitPrompt($this->do_get_remaining_data);
-			$this->write($username);
-			$this->setPrompt($password_prompt);
-			$this->waitPrompt($this->do_get_remaining_data);
-			$this->write($password);
+			if (!is_null($login_prompt)) {
+				$this->setPrompt($login_prompt);
+				$this->waitPrompt($this->do_get_remaining_data);
+				$this->write($username);
+			}
+
+			if (!is_null($password_prompt)) {
+				$this->setPrompt($password_prompt);
+				$this->waitPrompt($this->do_get_remaining_data);
+				$this->write($password);
+			}
 
 			//Reset prompt
 			$this->regex_prompt = $prompt;
