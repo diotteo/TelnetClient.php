@@ -621,7 +621,6 @@ class TelnetClient {
 
 
 	/**
-	 * @param boolean $returnOnEof don't wait for more data when the stream is empty
 	 */
 	private function getNextLine() {
 		return $this->getMoreData(array($this, '_getNextLine_cb'));
