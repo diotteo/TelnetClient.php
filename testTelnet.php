@@ -159,6 +159,12 @@ function parseArguments() {
 		print("Error, username or password is null\n");
 		printUsage();
 	}
+
+	foreach (array(&$loginPrompt, &$passPrompt) as &$var) {
+		if (strlen($var) === 0) {
+			$var = null;
+		}
+	}
 }
 
 
