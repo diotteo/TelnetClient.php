@@ -94,7 +94,7 @@ function parseArguments() {
 				'pass:',
 				'prompt:',
 				'login-prompt:',
-				'pass-prompt:'
+				'password-prompt:'
 			));
 
 	foreach ($opts as $opt => $optval) {
@@ -144,9 +144,11 @@ function parseArguments() {
 		case 'login-prompt':
 			$loginPrompt = $optval;
 			break;
-		case 'pass-prompt':
+		case 'password-prompt':
 			$passPrompt = $optval;
 			break;
+
+		//Of course, getopt just silently ignores unknown options...
 		default:
 			print("Unknown option \"{$opt}\"\n");
 			exit(1);
