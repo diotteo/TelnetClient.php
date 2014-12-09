@@ -178,11 +178,17 @@ $telnet->connect();
 $telnet->setPrompt($prompt);
 $telnet->login($username, $password, $loginPrompt, $passPrompt);
 foreach ($cmdList as $cmd) {
-	print("[Executing cmd \"{$cmd}\"]\n");
-	$out = implode("\n", $telnet->exec($cmd));
-
-	print("\n[output]=\"" . cleanMsg($out) . "\"\n");
-	//print("[Global buffer]=\"" . cleanMsg($telnet->getGlobalBuffer()) . "\"\n");
+	print("\n[Executing cmd \"{$cmd}\"]\n");
+	if (false) {
+		$out = implode("\n", $telnet->exec($cmd));
+		print("\n[output]=\"" . cleanMsg($out) . "\"\n");
+	} else {
+		$telnet->sendCommand($cmd);
+		do {
+			$line = $telnet->getLine($matchesPrompt);
+			print($line);
+		} while (!$matchesPrompt);
+	}
 }
 
 $telnet->disconnect();
