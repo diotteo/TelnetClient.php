@@ -578,6 +578,7 @@ class TelnetClient {
 
 	/**
 	 * @param callable get_more_data_cb boolean get_more_data_cb(numberOfCharactersInTheArray, lastCharacter, userData), $c will be false if no character is no more characters are available at the moment
+	 * @throws ConnectionTimeoutException
 	 */
 	private function getMoreData($get_more_data_cb, $userData = null) {
 		$data = '';
