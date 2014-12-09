@@ -170,7 +170,17 @@ function parseArguments() {
 
 function cleanMsg($str) {
 	$clean = addcslashes($str, "\r\t\"");
-	return $clean;
+
+	$s = '';
+	for ($i = 0; $i < strlen($clean); $i++) {
+		$c = $clean[$i];
+		if ($c === "\n" || !ctype_cntrl($c)) {
+			$s .= $c;
+		} else {
+			$s .= '0x' . bin2hex($c);
+		}
+	}
+	return $s;
 }
 
 use TelnetClient\TelnetClient;
@@ -194,7 +204,7 @@ foreach ($cmdList as $cmd) {
 		$telnet->sendCommand($cmd);
 		do {
 			$line = $telnet->getLine($matchesPrompt);
-			print($line);
+			print(cleanMsg($line));
 		} while (!$matchesPrompt);
 	}
 }
