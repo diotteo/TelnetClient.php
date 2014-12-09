@@ -160,6 +160,7 @@ class TelnetClient {
 	private $port;
 	private $connect_timeout; //Timeout to connect to remote
 	private $socket_timeout; //Timeout to wait for data
+	private $full_line_timeout; //Timeout to wait for a full line
 	private $state;
 	private $do_get_remaining_data;
 	private $socket;
@@ -255,7 +256,7 @@ class TelnetClient {
 	 * @param float|null $socket_timeout the timeout to wait for new data (null = infinite)
 	 * @throws \InvalidArgumentException if an argument is invalid
 	 */
-	public function __construct($host = '127.0.0.1', $port = 23, $connect_timeout = 1.0, $socket_timeout = 10.0, $prompt = '$') {
+	public function __construct($host = '127.0.0.1', $port = 23, $connect_timeout = 1.0, $socket_timeout = 10.0, $prompt = '$', $full_line_timeout = 0.10) {
 		$this->host = $host;
 
 		if (!is_int($port)) {
@@ -265,6 +266,7 @@ class TelnetClient {
 
 		$this->setConnectTimeout($connect_timeout);
 		$this->setSocketTimeout($socket_timeout);
+		$this->setFullLineTimeout($full_line_timeout);
 		$this->setPrompt($prompt);
 
 		$this->state = self::STATE_DEFAULT;
@@ -340,8 +342,8 @@ class TelnetClient {
 	 * @throws \InvalidArgumentException if $socket_timeout is of the wrong type or value
 	 */
 	public function setSocketTimeout($socket_timeout) {
-		if (!is_null($socket_timeout)
-				&& !(is_float($socket_timeout) && $socket_timeout >= 0.0)) {
+		if (!(is_null($socket_timeout)
+				|| ((is_float($socket_timeout) && $socket_timeout >= 0.0)))) {
 			throw new \InvalidArgumentException('socket_timeout must be non-negative float or null');
 		}
 		$this->socket_timeout = $socket_timeout;
@@ -355,6 +357,30 @@ class TelnetClient {
 	 */
 	public function getSocketTimeout() {
 		return $this->socket_timeout;
+	}
+
+
+	/**
+	 * @return float|null the timeout for a full line
+	 * @see setFullLineTimeout()
+	 */
+	public function getFullLineTimeout() {
+		return $this->full_line_timeout;
+	}
+
+
+	/**
+	 * @param float|null $full_line_timeout The maximum time to wait for before
+	 *      assuming the line is not carriage return terminated. null for infinity
+	 *
+	 * Note: Setting a timeout value larger than socket timeout is probably a bad idea
+	 */
+	public function setFullLineTimeout($full_line_timeout) {
+		if (!(is_null($full_line_timeout)
+				|| (is_float($full_line_timeout) && $full_line_timeout >= 0.0))) {
+			throw new \InvalidArgumentException('full_line_timeout must be null or non-negative float');
+		}
+		$this->full_line_timeout = $full_line_timeout;
 	}
 
 
@@ -404,11 +430,21 @@ class TelnetClient {
 	 * @return string Command result
 	 */
 	public function exec($command, $add_newline = true) {
+		$this->sendCommand($command, $add_newline);
+		$a_line = $this->waitPrompt($this->do_get_remaining_data);
+
+		return $a_line;
+	}
+
+
+	public function sendCommand($command, $add_newline = true) {
 		//TODO: Pass $command into the state machine to escape IACs, also look at UTF-8 RFC about how to escape newlines
 		$this->write($command, $add_newline);
-		$this->waitPrompt($this->do_get_remaining_data);
+	}
 
-		return $this->buffer;
+
+	public function getLine() {
+		return $this->getNextLine();
 	}
 
 
@@ -563,6 +599,33 @@ class TelnetClient {
 	}
 
 
+	private function _getNextLine_cb($nbchar, $c, &$firstCharTs) {
+		if (is_null($firstCharTs)) {
+			if ($c !== false) {
+				$firstCharTs = microtime(true);
+			}
+		} else if ($c === "\n") {
+			return false;
+		} else if (!is_null($this->full_line_timeout) && $firstCharTs + $this->full_line_timeout <= microtime(true)) {
+			return false;
+		}
+
+		//if ($c !== false) {
+		//	var_dump(microtime(true));
+		//	var_dump($c);
+		//}
+		return $c !== "\n";
+	}
+
+
+	/**
+	 * @param boolean $returnOnEof don't wait for more data when the stream is empty
+	 */
+	private function getNextLine() {
+		return $this->getMoreData(array($this, '_getNextLine_cb'));
+	}
+
+
 	private function getRemainingData() {
 		$cb = function ($nbchar, $c, $userData) {
 					return $c !== false;
@@ -580,12 +643,12 @@ class TelnetClient {
 	 * @return string|false the data received or false if none
 	 */
 	private function getMoreData($get_more_data_cb, $userData = null) {
-		$data = '';
+		$data = false;
 		$endTs = microtime(true) + $this->socket_timeout;
 		$a_c = array();
 		$c = null;
-		$is_get_more_data = true;
-		while ($is_get_more_data || call_user_func($get_more_data_cb, count($data), $c, $userData)) {
+		$is_get_more_data = null;
+		do {
 			$c = $this->asyncGetc();
 			if ($c === false) {
 				usleep(5);
@@ -601,6 +664,9 @@ class TelnetClient {
 
 			$is_get_more_data = $this->processStateMachine($a_c);
 			if (!$is_get_more_data && count($a_c) > 0) {
+				if ($data === false) {
+					$data = '';
+				}
 				$new_data = implode($a_c);
 				if (self::$DEBUG) {
 					print("Adding " . (ctype_print($new_data) ? "\"{$new_data}\"" : "(0x" . bin2hex($new_data) . ")") . " to buffer\n");
@@ -610,7 +676,7 @@ class TelnetClient {
 				$data .= $new_data;
 				$a_c = array();
 			}
-		}
+		} while ($is_get_more_data || call_user_func_array($get_more_data_cb, array(count($data), $c, &$userData)));
 
 		return $data;
 	}
@@ -825,25 +891,33 @@ class TelnetClient {
 	 * Reads socket until prompt is encountered
 	 *
 	 * @param boolean $do_get_remaining_data set to true to read all received data after the prompt is found
-	 * @return void
+	 * @return string[] array of lines (trailing "\n" are stripped)
 	 */
 	protected function waitPrompt($do_get_remaining_data = false) {
 		if (self::$DEBUG) {
 			print("\nWaiting for prompt \"{$this->regex_prompt}\"\n");
 		}
 
-		$this->clearBuffer();
+		$a_line = array();
 		do {
-			$data = $this->waitForNbData(1);
-			$this->buffer .= $data;
-			$this->global_buffer .= $data;
+			$line = $this->getNextLine();
 
-		} while (preg_match("/{$this->regex_prompt}$/", $this->buffer) === 0);
+			if ($line === false) {
+				usleep(1);
+				continue;
+			} else {
+				$a_line[] = rtrim($line, "\n");
+			}
+
+		} while (preg_match("/{$this->regex_prompt}/", $line) === 0);
 
 		if ($do_get_remaining_data) {
-			$data = $this->getRemainingData();
-			$this->buffer .= $data;
-			$this->global_buffer .= $data;
+			$line = $this->getRemainingData();
+			if ($line !== false) {
+				$a_line = array_merge($a_line, explode("\n", $line));
+			}
 		}
+
+		return $a_line;
 	}
 }
