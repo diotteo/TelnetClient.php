@@ -421,7 +421,7 @@ class TelnetClient {
 	 * Discards unread but received data, processing options if any
 	 */
 	public function discardRemainingData() {
-		$this->getRemainingData($has_timed_out);
+		$this->getRemainingData();
 	}
 
 
@@ -523,11 +523,11 @@ class TelnetClient {
 
 
 	/**
-	 * @deprecated please use waitForNbData(1, $has_timed_out);
+	 * @deprecated please use waitForNbData(1);
 	 * Note: This function doesn't add the returned characters to the buffer nor the global buffer
 	 */
 	protected function getc() {
-		$c = $this->waitForNbData(1, $has_timed_out);
+		$c = $this->waitForNbData(1);
 		return $c;
 	}
 
@@ -546,14 +546,13 @@ class TelnetClient {
 	 * Reads up to $length bytes of data (TELNET commands are not counted) or wait for $this->socket_timeout seconds, whichever occurs first
 	 *
 	 * @param int|null $length maximum number of data bytes to read. Either a non-negative int or null (infinite length)
-	 * @param mixed $has_timed_out Reference. Set to true if we timed out waiting for $length data, false otherwise.
 	 *
 	 * @return string the raw data read as a string
 	 * @throws \InvalidArgumentException if $length is neither null nor int
 	 * @throws \InvalidArgumentException if $length is int and smaller than 1
 	 * @throws \InvalidArgumentException if $length is null and socket_timeout is null
 	 */
-	private function waitForNbData($length = null, &$has_timed_out) {
+	private function waitForNbData($length = null) {
 		if (is_null($length) && is_null($this->socket_timeout)) {
 			throw new \InvalidArgumentException('Would wait infinitely');
 		} else if (!is_null($length) && (!is_int($length) || $length < 1)) {
@@ -564,36 +563,35 @@ class TelnetClient {
 					return is_null($length) || $nbchar < $length;
 				};
 
-		return $this->getMoreData($cb, $has_timed_out, $length);
+		return $this->getMoreData($cb, $length);
 	}
 
 
-	private function getRemainingData(&$has_timed_out) {
+	private function getRemainingData() {
 		$cb = function ($nbchar, $c, $userData) {
 					return $c !== false;
 				};
 
-		return $this->getMoreData($cb, $has_timed_out);
+		return $this->getMoreData($cb);
 	}
 
 
 	/**
 	 * @param callable get_more_data_cb boolean get_more_data_cb(numberOfCharactersInTheArray, lastCharacter, userData), $c will be false if no character is no more characters are available at the moment
-	 * @param boolean has_timed_out
 	 */
-	private function getMoreData(callable $get_more_data_cb, &$has_timed_out, $userData = null) {
+	private function getMoreData(callable $get_more_data_cb, $userData = null) {
 		$data = '';
 		$endTs = microtime(true) + $this->socket_timeout;
 		$a_c = array();
 		$c = null;
 		$is_get_more_data = true;
-		$has_timed_out = false;
-		while (!$has_timed_out
-				&& ($is_get_more_data || call_user_func($get_more_data_cb, count($data), $c, $userData))) {
+		while ($is_get_more_data || call_user_func($get_more_data_cb, count($data), $c, $userData)) {
 			$c = $this->asyncGetc();
 			if ($c === false) {
 				usleep(5);
-				$has_timed_out = (!is_null($this->socket_timeout) && microtime(true) > $endTs);
+				if (!is_null($this->socket_timeout) && microtime(true) > $endTs) {
+					throw new ConnectionTimeoutException("Timed out");
+				}
 				continue;
 			} else {
 				//Reset the timeout
@@ -838,7 +836,6 @@ class TelnetClient {
 	 *
 	 * @param boolean $do_get_remaining_data set to true to read all received data after the prompt is found
 	 * @return void
-	 * @throws ConnectionTimeoutException on time out
 	 */
 	protected function waitPrompt($do_get_remaining_data = false) {
 		if (self::$DEBUG) {
@@ -847,17 +844,14 @@ class TelnetClient {
 
 		$this->clearBuffer();
 		do {
-			$data = $this->waitForNbData(1, $has_timed_out);
+			$data = $this->waitForNbData(1);
 			$this->buffer .= $data;
 			$this->global_buffer .= $data;
 
-			if ($has_timed_out) {
-				throw new ConnectionTimeoutException("Connection timed out");
-			}
 		} while (preg_match("/{$this->regex_prompt}$/", $this->buffer) === 0);
 
 		if ($do_get_remaining_data) {
-			$data = $this->getRemainingData($has_timed_out);
+			$data = $this->getRemainingData();
 			$this->buffer .= $data;
 			$this->global_buffer .= $data;
 		}
