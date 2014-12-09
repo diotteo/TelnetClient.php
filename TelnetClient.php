@@ -161,10 +161,8 @@ class TelnetClient {
 	private $connect_timeout; //Timeout to connect to remote
 	private $socket_timeout; //Timeout to wait for data
 	private $state;
-	private $global_buffer;
 	private $do_get_remaining_data;
 	private $socket;
-	private $buffer;
 	private $regex_prompt;
 	private $errno;
 	private $errstr;
@@ -270,7 +268,6 @@ class TelnetClient {
 		$this->setPrompt($prompt);
 
 		$this->state = self::STATE_DEFAULT;
-		$this->global_buffer = '';
 		$this->do_get_remaining_data = true;
 		$this->has_go_ahead = false; //By default the server speaks first (?)
 	}
@@ -284,8 +281,6 @@ class TelnetClient {
 	public function __destruct() {
 		// clean up resources
 		$this->disconnect();
-		$this->buffer = null;
-		$this->global_buffer = null;
 	}
 
 
@@ -819,16 +814,6 @@ class TelnetClient {
 		}
 
 		return self::TELNET_OK;
-	}
-
-
-	/**
-	 * Returns the content of the global command buffer
-	 *
-	 * @return string Content of the global command buffer
-	 */
-	public function getGlobalBuffer() {
-		return $this->global_buffer;
 	}
 
 
