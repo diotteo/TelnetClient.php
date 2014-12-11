@@ -575,16 +575,6 @@ class TelnetClient {
 
 
 	/**
-	 * Clears internal command buffer
-	 *
-	 * @return void
-	 */
-	private function clearBuffer() {
-		$this->buffer = '';
-	}
-
-
-	/**
 	 * Reads up to $length bytes of data (TELNET commands are not counted) or wait for $this->socket_timeout seconds, whichever occurs first
 	 *
 	 * @param int|null $length maximum number of data bytes to read. Either a non-negative int or null (infinite length)
@@ -869,9 +859,6 @@ class TelnetClient {
 		if (!is_resource($this->socket)) {
 			throw new ConnectionException("Telnet connection closed");
 		}
-
-		// clear buffer from last command
-		$this->clearBuffer();
 
 		if ($add_newline) {
 			$buffer .= self::NVT_CR . self::NVT_LF;
