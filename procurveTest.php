@@ -47,22 +47,16 @@ $telnet->login($username, $password, $loginPrompt, $passPrompt);
 $PAGER_LINE = '-- MORE --, next page: Space, next line: Enter, quit: Control-C';
 
 foreach ($cmdList as $cmd) {
-	//print("\n[Executing cmd \"{$cmd}\"]\n");
-	if (false) {
-		$out = implode("\n", $telnet->exec($cmd));
-		print("\n[output]=\"" . $out . "\"\n");
-	} else {
-		$telnet->sendCommand($cmd);
-		do {
-			$line = $telnet->getLine($matchesPrompt);
+	$telnet->sendCommand($cmd);
+	do {
+		$line = $telnet->getLine($matchesPrompt);
 
-			if (strncmp($line, $PAGER_LINE, strlen($PAGER_LINE)) === 0) {
-				$telnet->sendCommand(' ', false);
-			} else {
-				print($line);
-			}
-		} while (!$matchesPrompt);
-	}
+		if (strncmp($line, $PAGER_LINE, strlen($PAGER_LINE)) === 0) {
+			$telnet->sendCommand(' ', false);
+		} else {
+			print($line);
+		}
+	} while (!$matchesPrompt);
 }
 
 $telnet->disconnect();
