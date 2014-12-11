@@ -1,7 +1,7 @@
 #! /usr/bin/env php
 <?php
 
-require_once(__DIR__ . '/TelnetClient.php');
+require_once('TelnetClient.php');
 
 $port = 23;
 $host = '192.168.253.1';
@@ -12,7 +12,7 @@ $debug = 0;
 $cmdList = array('ls /');
 $loginPrompt = 'Press any key to continue';
 $passPrompt = null;
-$prompt = '^[[:cntrl]]*[[:alnum:]-]*(\(config\))?# ';
+$prompt = '^[[:alnum:]-]+(\(config\))?#';
 
 
 function cleanMsg($str) {
@@ -41,17 +41,26 @@ $out = '';
 $telnet = new TelnetClient($host, $port);
 $telnet->connect();
 $telnet->setRegexPrompt($prompt);
+$telnet->setPruneCtrlSeq(true);
 $telnet->login($username, $password, $loginPrompt, $passPrompt);
+
+$PAGER_LINE = '-- MORE --, next page: Space, next line: Enter, quit: Control-C';
+
 foreach ($cmdList as $cmd) {
-	print("\n[Executing cmd \"{$cmd}\"]\n");
+	//print("\n[Executing cmd \"{$cmd}\"]\n");
 	if (false) {
 		$out = implode("\n", $telnet->exec($cmd));
-		print("\n[output]=\"" . cleanMsg($out) . "\"\n");
+		print("\n[output]=\"" . $out . "\"\n");
 	} else {
 		$telnet->sendCommand($cmd);
 		do {
 			$line = $telnet->getLine($matchesPrompt);
-			print(cleanMsg($line));
+
+			if (strncmp($line, $PAGER_LINE, strlen($PAGER_LINE)) === 0) {
+				$telnet->sendCommand(' ', false);
+			} else {
+				print($line);
+			}
 		} while (!$matchesPrompt);
 	}
 }
