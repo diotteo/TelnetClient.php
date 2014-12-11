@@ -916,7 +916,7 @@ class TelnetClient {
 	}
 
 
-	protected function matchesPrompt($line) {
+	public function matchesPrompt($line) {
 		return preg_match("/{$this->regex_prompt}/", $line) === 1;
 	}
 
