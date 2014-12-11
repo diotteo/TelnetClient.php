@@ -8,8 +8,9 @@ but was completely rewritten. I tried to keep interface compatibility as much as
 
 Things that I know not to work the same anymore:<br>
 - Using the constructor with more than 2 arguments, the meaning and order of subsequent parameters have changed<br>
-- Strings written to the socket are no more added to the global buffer
 - Line endings should always be returned to the caller as "\n" but this guarantee is based on the assumption of a correct server implementation (one that encodes line endings as \<CR\> \<LF\> in the default (text) state)
+- buffer and global_buffer as well as their associated methods are gone
+- The constructor no longer does a connect() call
 - The subclassing interface is probably broken (I couldn't keep the getBuffer() method without skipping the state machine)
 
 Many things are still wrong (though it was like that in upstream versions too):
@@ -27,7 +28,10 @@ use TelnetClient\TelnetClient;
 
 $telnet = new TelnetClient('127.0.0.1', 23);
 $telnet->connect();
+$telnet->setPrompt('$'); //setRegexPrompt() to use a regex
+//$telnet->setPruneCtrlSeq(true); //Enable this to filter out ANSI control/escape sequences
 $telnet->login('telnetuser', 'weak');
+
 $cmdResult = $telnet->exec('ls /');
 
 $telnet->disconnect();
