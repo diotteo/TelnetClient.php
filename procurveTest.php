@@ -9,7 +9,6 @@ $username = ' ';
 $password = null;
 $verbosity = 0;
 $debug = 0;
-$cmdList = array('ls /');
 $loginPrompt = 'Press any key to continue';
 $passPrompt = null;
 $prompt = '^[[:alnum:]-]+(\([[:alnum:]-]+\))?#';
@@ -35,7 +34,11 @@ use TelnetClient\TelnetClient;
 
 TelnetClient::setDebug($debug > 0);
 
-$cmdList = array('sh ru', 'conf t', 'sh ru');
+if ($argc < 2) {
+	$cmdList = array('sh ru', 'conf t', 'sh ru');
+} else {
+	$cmdList = array_slice($argv, 1);
+}
 
 $out = '';
 $telnet = new TelnetClient($host, $port);
@@ -56,6 +59,9 @@ foreach ($cmdList as $cmd) {
 		} else {
 			if (!$matchesPrompt && strncmp($line, $cmd, strlen($cmd)) === 0) {
 				$matchesPrompt = $telnet->matchesPrompt(substr($line, strlen($cmd)));
+
+				//Cosmetic, just so the next command doesn't appear on the same line
+				$line .= "\n";
 			}
 			print($line);
 		}
