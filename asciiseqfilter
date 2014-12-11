@@ -1,0 +1,18 @@
+#! /usr/bin/env php
+<?php
+
+require_once('AnsiAsciiControlParser.php');
+
+$parser = new AnsiAsciiControlParser();
+
+$f = fopen('php://stdin', 'r');
+
+$parser = new AnsiAsciiControlParser();
+while (false !== ($s = fgets($f))) {
+	$parser->parse($s);
+	print($parser->getTextString());
+}
+
+fclose($f);
+
+?>
