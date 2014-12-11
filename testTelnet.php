@@ -13,6 +13,7 @@ $cmdList = array('ls /');
 $loginPrompt = 'login:';
 $passPrompt = 'Password:';
 $prompt = '$';
+$pruneCtrlSeq = false;
 
 
 function getOptLvl($val) {
@@ -63,6 +64,7 @@ Options:
   --prompt <prompt>: look for <prompt> instead of {$prompt}
   --login-prompt <login-prompt>: look for <login-prompt> instead of {$loginPrompt}
   --password-prompt <pass-prompt>: look for <pass-prompt> instead of {$passPrompt}
+	--prune-ctrl-seq: filters out the ANSI control sequences
 
 EOT
 );
@@ -81,6 +83,7 @@ function parseArguments() {
 	global $loginPrompt;
 	global $passPrompt;
 	global $prompt;
+	global $pruneCtrlSeq;
 
 	$opts = getopt('dhc:H:P:u:p:v',
 			array(
@@ -94,7 +97,8 @@ function parseArguments() {
 				'pass:',
 				'prompt:',
 				'login-prompt:',
-				'password-prompt:'
+				'password-prompt:',
+				'prune-ctrl-seq'
 			));
 
 	foreach ($opts as $opt => $optval) {
@@ -147,6 +151,9 @@ function parseArguments() {
 		case 'password-prompt':
 			$passPrompt = $optval;
 			break;
+		case 'prune-ctrl-seq':
+			$pruneCtrlSeq = true;
+			break;
 
 		//Of course, getopt just silently ignores unknown options...
 		default:
@@ -167,22 +174,6 @@ function parseArguments() {
 	}
 }
 
-
-function cleanMsg($str) {
-	$clean = addcslashes($str, "\r\t\"");
-
-	$s = '';
-	for ($i = 0; $i < strlen($clean); $i++) {
-		$c = $clean[$i];
-		if ($c === "\n" || !ctype_cntrl($c)) {
-			$s .= $c;
-		} else {
-			$s .= '0x' . bin2hex($c);
-		}
-	}
-	return $s;
-}
-
 use TelnetClient\TelnetClient;
 
 
@@ -193,18 +184,19 @@ TelnetClient::setDebug($debug > 0);
 $out = '';
 $telnet = new TelnetClient($host, $port);
 $telnet->connect();
+$telnet->setPruneCtrlSeq($pruneCtrlSeq);
 $telnet->setPrompt($prompt);
 $telnet->login($username, $password, $loginPrompt, $passPrompt);
 foreach ($cmdList as $cmd) {
 	print("\n[Executing cmd \"{$cmd}\"]\n");
 	if (false) {
 		$out = implode("\n", $telnet->exec($cmd));
-		print("\n[output]=\"" . cleanMsg($out) . "\"\n");
+		print("\n[output]=\"{$out}\"\n");
 	} else {
 		$telnet->sendCommand($cmd);
 		do {
 			$line = $telnet->getLine($matchesPrompt);
-			print(cleanMsg($line));
+			print($line);
 		} while (!$matchesPrompt);
 	}
 }
