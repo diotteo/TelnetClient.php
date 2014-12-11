@@ -20,6 +20,11 @@
 
 namespace TelnetClient;
 
+require_once('AnsiAsciiControlParser.php');
+
+use \AnsiAsciiControlParser;
+
+
 class UnimplementedException extends \ErrorException {
 }
 
@@ -168,7 +173,8 @@ class TelnetClient {
 	private $errno;
 	private $errstr;
 	private $has_go_ahead;
-
+	private $ctrlcharparser;
+	private $pruneCtrlSeq;
 
 
 	/**
@@ -272,6 +278,8 @@ class TelnetClient {
 		$this->state = self::STATE_DEFAULT;
 		$this->do_get_remaining_data = true;
 		$this->has_go_ahead = false; //By default the server speaks first (?)
+		$this->cntrlcharparser = new AnsiAsciiControlParser();
+		$this->pruneCtrlSeq = false;
 	}
 
 
@@ -381,6 +389,16 @@ class TelnetClient {
 			throw new \InvalidArgumentException('full_line_timeout must be null or non-negative float');
 		}
 		$this->full_line_timeout = $full_line_timeout;
+	}
+
+
+	public function getPruneCtrlSeq() {
+		return $this->pruneCtrlSeq;
+	}
+
+
+	public function setPruneCtrlSeq($enable) {
+		$this->pruneCtrlSeq = !!$enable;
 	}
 
 
@@ -622,7 +640,14 @@ class TelnetClient {
 	/**
 	 */
 	private function getNextLine() {
-		return $this->getMoreData(array($this, '_getNextLine_cb'));
+		$line = $this->getMoreData(array($this, '_getNextLine_cb'));
+
+		if ($line !== false && $this->pruneCtrlSeq) {
+			$this->cntrlcharparser->parse($line);
+			$line = $this->cntrlcharparser->getTextString();
+		}
+
+		return $line;
 	}
 
 
@@ -631,7 +656,14 @@ class TelnetClient {
 					return $c !== false;
 				};
 
-		return $this->getMoreData($cb);
+		$data = $this->getMoreData($cb);
+
+		if ($data !== false && $this->pruneCtrlSeq) {
+			$this->cntrlcharparser->parse($data);
+			$data = $this->cntrlcharparser->getTextString();
+		}
+
+		return $data;
 	}
 
 
