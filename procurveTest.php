@@ -12,7 +12,7 @@ $debug = 0;
 $cmdList = array('ls /');
 $loginPrompt = 'Press any key to continue';
 $passPrompt = null;
-$prompt = '^[[:alnum:]-]+(\(config\))?#';
+$prompt = '^[[:alnum:]-]+(\([[:alnum:]-]+\))?#';
 
 
 function cleanMsg($str) {
@@ -35,7 +35,7 @@ use TelnetClient\TelnetClient;
 
 TelnetClient::setDebug($debug > 0);
 
-$cmdList = array('sh ru');
+$cmdList = array('sh ru', 'conf t', 'sh ru');
 
 $out = '';
 $telnet = new TelnetClient($host, $port);
@@ -54,6 +54,9 @@ foreach ($cmdList as $cmd) {
 		if (strncmp($line, $PAGER_LINE, strlen($PAGER_LINE)) === 0) {
 			$telnet->sendCommand(' ', false);
 		} else {
+			if (!$matchesPrompt && strncmp($line, $cmd, strlen($cmd)) === 0) {
+				$matchesPrompt = $telnet->matchesPrompt(substr($line, strlen($cmd)));
+			}
 			print($line);
 		}
 	} while (!$matchesPrompt);
