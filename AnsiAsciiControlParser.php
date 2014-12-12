@@ -46,7 +46,7 @@ class AnsiAsciiControlParser {
 	}
 
 
-	public function getTokenList() {
+	public function getSequenceList() {
 		return $this->sequenceList;
 	}
 
