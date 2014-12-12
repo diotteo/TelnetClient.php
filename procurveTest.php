@@ -34,10 +34,14 @@ use TelnetClient\TelnetClient;
 
 TelnetClient::setDebug($debug > 0);
 
-if ($argc < 2) {
+if ($argc === 1) {
 	$cmdList = array('sh ru', 'conf t', 'sh ru');
+} else if ($argc === 2) {
+	print("Usage: {$argv[0]} <hostname> <command>...\n");
+	exit(1);
 } else {
-	$cmdList = array_slice($argv, 1);
+	$host = $argv[1];
+	$cmdList = array_slice($argv, 2);
 }
 
 $out = '';
