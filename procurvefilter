@@ -1,0 +1,46 @@
+#! /usr/bin/env php
+<?php
+
+require_once('AnsiAsciiControlParser.php');
+
+$parser = new AnsiAsciiControlParser();
+
+$f = fopen('php://stdin', 'r');
+stream_set_blocking($f, 0);
+
+$a_BACKSPACE_STR = array(
+		hex2bin('1b5b3f323568'),
+		hex2bin('1b5b36303b313148'),
+		hex2bin('1b5b36303b31314820'),
+		hex2bin('1b5b36303b313148')
+		);
+
+$parser = new AnsiAsciiControlParser();
+
+$buffer = '';
+do {
+	$s = fgets($f);
+	$endc = $s[strlen($s) - 1];
+
+	if ($s === false) {
+		//Look for timeout
+	} else {
+		$parser->parse($s);
+		if ($endc === "\n") {
+			print($buffer);
+		}
+
+		$seqList = $parser->getSequenceList();
+		foreach ($seqList as $seq) {
+			$ss = $seq->getString();
+			if ($seq instanceof TextSequence) {
+				print($ss);
+			//} else if ($seq instanceof ControlSequence) {
+			}
+		}
+	}
+} while (!feof($f));
+
+fclose($f);
+
+?>
