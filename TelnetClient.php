@@ -461,10 +461,20 @@ class TelnetClient {
 	}
 
 
-	public function getLine(&$matchesPrompt) {
+	/**
+	 * @param boolean $matchesPrompt reference set to true if the line matches the prompt, false otherwise
+	 * @param boolean $waitForFullLine true to wait indefinitely for a full
+	 *     line ("\n" terminated). False waits for up to fullLineTimeout before returning
+	 *
+	 * @return string|false The line as a string with its terminating "\n".
+	 *     In "non-full line" mode, the line may be incomplete or false (if no character is available)
+	 */
+	public function getLine(&$matchesPrompt, $waitForFullLine = true) {
+		$waitForFullLine = !!$waitForFullLine;
+
 		do {
 			$line = $this->getNextLine();
-		} while ($line === false);
+		} while ($waitForFullLine && $line === false);
 		$matchesPrompt = $this->matchesPrompt($line);
 		return $line;
 	}
