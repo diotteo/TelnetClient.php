@@ -1,0 +1,32 @@
+[?6l[1;24r[?7l[2J[1;1H[1;24r[24;1H[24;1H[2K[24;1H[?25h[24;1H[24;1HDIOO-sw3# [24;1H[24;11H[24;1H[?25h[24;11H[24;0HE[24;1H[24;11H[24;1H[2K[24;1H[?25h[24;1H[1;24r[24;1H[1;24r[24;1H[24;1H[2K[24;1H[?25h[24;1H[24;1HDIOO-sw3# [24;1H[24;11H[24;1H[?25h[24;11H
+[24;11Hsh ru[24;11H[?25h[24;16H[24;0HE[24;1H[24;16H[24;1H[2K[24;1H[?25h[24;1H[1;24r[24;1H
+Running configuration:
+
+; J9562A Configuration Editor; Created on release #A.15.09.0012
+; Ver #03:01.15.05:12
+hostname "DIOO-sw3"
+mirror-port 8
+interface 1
+   monitor
+   exit
+interface 7
+   monitor
+   exit
+snmp-server community "public" unrestricted
+vlan 1
+   name "DEFAULT-VLAN"
+   no untagged 1-10
+   no ip address
+   exit
+vlan 2
+   name "access VLAN"
+   untagged 1-10
+   no ip address
+[24;1H[2K-- MORE --, next page: Space, next line: Enter, quit: Control-C[24;1H
+Fatal error: Uncaught exception 'TelnetClient\ConnectionTimeoutException' with message 'Timed out' in /home/dioo/Prog/TelnetClient.php/TelnetClient.php:674
+Stack trace:
+#0 /home/dioo/Prog/TelnetClient.php/TelnetClient.php(643): TelnetClient\TelnetClient->getMoreData(Array)
+#1 /home/dioo/Prog/TelnetClient.php/TelnetClient.php(449): TelnetClient\TelnetClient->getNextLine()
+#2 /home/dioo/Prog/TelnetClient.php/procurveTest.php(54): TelnetClient\TelnetClient->getLine(false)
+#3 {main}
+  thrown in /home/dioo/Prog/TelnetClient.php/TelnetClient.php on line 674

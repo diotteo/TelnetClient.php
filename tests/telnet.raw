@@ -1,0 +1,68 @@
+Trying 192.168.253.1...
+Connected to 192.168.253.1.
+Escape character is '^]'.
+[2J[?7l[3;23r[?6l[1;1H[?25l[1;1HHP J9562A Switch 2915-8G-PoE
+Software revision A.15.09.0012
+
+Copyright (C) 1991-2013 Hewlett-Packard Development Company, L.P.
+
+                   RESTRICTED RIGHTS LEGEND
+ Confidential computer software.  Valid license from HP required for possession,
+ use or copying. Consistent with FAR 12.211 and 12.212, Commercial Computer
+ Software, Computer Software Documentation, and Technical Data for Commercial
+ Items are licensed to the U.S. Government under vendor's standard commercial
+ license.
+                   HEWLETT-PACKARD DEVELOPMENT COMPANY, L.P. 
+                   20555 State Highway 249, Houston, TX 77070
+
+We'd like to keep you up to date about:
+  * Software feature updates
+  * New product announcements
+  * Special events
+Please register your products now at:  www.hp.com/networking/register[1;20r[1;1H[1;61r[20;1H[61;1HPress any key to continue[20;1H[?25h[61;27H[?6l[1;61r[?7l[2J[1;1H[1;61r[61;1H[61;1H[2K[61;1H[?25h[61;1H[61;1HDIOO-sw3# [61;1H[61;11H[61;1H[?25h[61;11H[61;11Hs[61;11H[?25h[61;12H[61;12Hh[61;12H[?25h[61;13H[61;13H [61;13H[?25h[61;14H[61;14Hr[61;14H[?25h[61;15H[61;15Hu[61;15H[?25h[61;16H[61;0HE[61;1H[61;16H[61;1H[2K[61;1H[?25h[61;1H[1;61r[61;1H
+Running configuration:
+
+; J9562A Configuration Editor; Created on release #A.15.09.0012
+; Ver #03:01.15.05:12
+hostname "DIOO-sw3"
+mirror-port 8
+interface 1
+   monitor
+   exit
+interface 7
+   monitor
+   exit
+snmp-server community "public" unrestricted
+vlan 1
+   name "DEFAULT-VLAN"
+   no untagged 1-10
+   no ip address
+   exit
+vlan 2
+   name "access VLAN"
+   untagged 1-10
+   no ip address
+   jumbo
+   exit
+vlan 3
+   name "VLAN3"
+   tagged 9-10
+   ip address 192.168.253.1 255.255.255.0
+   exit
+
+[1;61r[61;1H[61;1H[2K[61;1H[?25h[61;1H[61;1HDIOO-sw3# [61;1H[61;11H[61;1H[?25h[61;11H[61;11Hc[61;11H[?25h[61;12H[61;12Ho[61;12H[?25h[61;13H[61;13Hn[61;13H[?25h[61;14H[61;14Hf[61;14H[?25h[61;15H[61;15H [61;15H[?25h[61;16H[61;16Ht[61;16H[?25h[61;17H[61;0HE[61;1H[61;17H[61;1H[2K[61;1H[?25h[61;1H[1;61r[61;1H[1;61r[61;1H[61;1H[2K[61;1H[?25h[61;1H[61;1HDIOO-sw3(config)# [61;1H[61;19H[61;1H[?25h[61;19H[61;19Hs[61;19H[?25h[61;20H[61;20Hh[61;20H[?25h[61;21H[61;21H [61;21H[?25h[61;22H[61;22Hv[61;22H[?25h[61;23H[61;23Hl[61;23H[?25h[61;24H[61;24Ha[61;24H[?25h[61;25H[61;25Hn[61;25H[?25h[61;26H[61;0HE[61;1H[61;26H[61;1H[2K[61;1H[?25h[61;1H[1;61r[61;1H
+ Status and Counters - VLAN Information
+
+  Maximum VLANs to support : 256                  
+  Primary VLAN : DEFAULT-VLAN
+  Management VLAN :             
+
+  VLAN ID Name                             | Status     Voice Jumbo
+  ------- -------------------------------- + ---------- ----- -----
+  1       DEFAULT-VLAN                     | Port-based No    No   
+  2       access VLAN                      | Port-based No    Yes  
+  3       VLAN3                            | Port-based No    No   
+ 
+
+[1;61r[61;1H[61;1H[2K[61;1H[?25h[61;1H[61;1HDIOO-sw3(config)# [61;1H[61;19H[61;1H[?25h[61;19H[61;19Hl[61;19H[?25h[61;20H[61;20Ho[61;20H[?25h[61;21H[61;21Hg[61;21H[?25h[61;22H[61;22Ho[61;22H[?25h[61;23H[61;23Hu[61;23H[?25h[61;24H[61;24Ht[61;24H[?25h[61;25H[61;0HE[61;1H[61;25H[61;1H[2K[61;1H[?25h[61;1H[1;61r[61;1H[1;61r[61;1H[61;1H[2K[61;1H[?25h[61;1H[61;1HDo you want to log out [y/n]? [61;1H[61;31H[61;1H[?25h[61;31H[61;31Hy[61;31H[?25h[61;32H[61;0HE[61;1H[61;32H[61;1H[2K[61;1H[?25h[61;1H[1;61r[61;1H[2J[?7l[1;61r[?6l[61;1H[?25h[61;1H[?6l[1;0r[?7l[2J[61;1H[1;1H[2K[61;1H
+

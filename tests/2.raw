@@ -1,0 +1,32 @@
+sh ru
+Running configuration:
+
+; J9562A Configuration Editor; Created on release #A.15.09.0012
+; Ver #03:01.15.05:12
+hostname "DIOO-sw3"
+mirror-port 8
+interface 1
+   monitor
+   exit
+interface 7
+   monitor
+   exit
+snmp-server community "public" unrestricted
+vlan 1
+   name "DEFAULT-VLAN"
+   no untagged 1-10
+   no ip address
+   exit
+vlan 2
+   name "access VLAN"
+   untagged 1-10
+   no ip address
+   jumbo
+   exit
+vlan 3
+   name "VLAN3"
+   tagged 9-10
+   ip address 192.168.253.1 255.255.255.0
+   exit
+
+DIOO-sw3# 
