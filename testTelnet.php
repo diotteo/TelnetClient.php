@@ -64,7 +64,7 @@ Options:
   --prompt <prompt>: look for <prompt> instead of {$prompt}
   --login-prompt <login-prompt>: look for <login-prompt> instead of {$loginPrompt}
   --password-prompt <pass-prompt>: look for <pass-prompt> instead of {$passPrompt}
-	--prune-ctrl-seq: filters out the ANSI control sequences
+  --prune-ctrl-seq: filters out the ANSI control sequences
 
 EOT
 );
